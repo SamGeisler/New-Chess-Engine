@@ -1,0 +1,21 @@
+Board struct: Piece array and metadata
+Player control info:
+
+AI: Simple get_ai_move
+
+Render: Simple call to render_board - Includes floating piece from player control info if necessary (add parameter?)
+
+Player: get_player_move - halts execution and calls render_board every frame until move is made.
+
+General: 
+White: 0
+Black: 1
+
+Goals:
+- Reasonably featured GUI
+- Perft Suite
+- Basic solution to test different iterations against each other.
+- LiChess API Implementation
+- Goal LiChess Rating (2300? More would be better. At least better than 98% or 99% of human players on LiChess)
+
+
