@@ -1,21 +1,115 @@
-Board struct: Piece array and metadata
-Player control info:
+-----SAVED LINKS-----
+How to detect information about pawn structure based on bitboard: https://www.stmintz.com/ccc/index.php?id=271055
+---------------------
 
-AI: Simple get_ai_move
-
-Render: Simple call to render_board - Includes floating piece from player control info if necessary (add parameter?)
-
-Player: get_player_move - halts execution and calls render_board every frame until move is made.
-
-General: 
-White: 0
-Black: 1
-
-Goals:
-- Reasonably featured GUI
-- Perft Suite
+-----GOALS-----
+- Engine
+    - Iterative deepened minimax with AB pruning and quiescence search
+    - Transposition table
+    - Improved static evaluation with bitboards
+    - Some approach to move ordering
+- GUI
+- Perft test suite
 - Basic solution to test different iterations against each other.
 - LiChess API Implementation
-- Goal LiChess Rating (2300? More would be better. At least better than 98% or 99% of human players on LiChess)
+    - TBD Goal rating (2300? More would be better. At least better than 98% or 99% of human players on LiChess)
+---------------
+
+-----GAME STATE REPRESENATION-----
+Primary board struct:
+    - Not copied: Minimax maintains a global struct
+    - Approach taken from 'Denser board' representation from CPW:
+    - array of 8 bit boards: white, black, pawns, knights, bishops, rooks, queens, kings (enum for each of these in the same order)
+    - Likely addition: Add other bitboards (e.g. pawn attacks) which don't have to be updated after every move, but can save time when computing is_in_check or static_eval
+
+Metadata struct: (For now, this will be implemented as a simple struct. I'm not sure of the best way to approach bitfields for performance, so I'll wait until I can experiment to reduce the size)
+    - Combined with board struct into game state struct
+    - Members:
+        - castle flags (4 bits)
+        - En passant right (square of where the pawn performing ep would move from, 0 for none)
+        - FMR count
+
+Move struct: (same as metadata struct)
+    - 16 bit-bitfield
+        - [12:15] Source square    
+        - [8:11] Dest square
+        - [6:7] Promotion piece (0-knight, 1-bishop, 2-rook, 3-queen)
+    - All complexities handled in execute_move
+    - Unexecution ambiguites (namely which piece was captured, en passant or not) saved when executing
+
+Board arr:
+    - Only used for rendering board and player control. Only updated from primary struct after engine makes move.
+------------------------
+
+-----MOVE GENERATION-----
+Similar broad concept to old engine: Populate a 220-length array with move structs (just src, dest, promotion)
+generate_moves first finds a pseudo legal move, executes it, and then checks if the king is in check. (using bitboards)
+
+Move generation by piece:
+    Pawns: For pushes, simple bitmap. For attacks, use a lookup table and bitwise and with enemey pieces.
+    Knights: Lookup table
+    Bishops, rooks, queens: Magic bitboards
+    King: Lookup table
+Each of these approaches produces a bitboard of destination squares given a source square. The primary generate_moves function appends a move struct for each location in the bitboard (after checking legality)
+
+is_in_check is implemented with a simple attacking bitboard, which will be calculated on the fly
+
+-----OLD ENGINE-----
+//*Get_ai_move returns move struct by calling eval
+
+eval:
+    - Single recursion.
+    - Array of move structs is allocated and populated by gen_moves
+    - Once max_depth is reached, quiescence search is begun
+
+quiescence search:
+    - Single recursion. Calls generate_moves_CCP
+
+gen_moves:
+    - Loops over the board. For each piece found, calls the corresponding gen_blank_moves function. These functions all call append_move or try_append_move
+    - Pawns: No loops, instead a very large if tree/chain to check for DPP, en-passant, promotions, etc.
+    - Bishops, rooks, queens: Loops in every direction
+    - Knights: Eight if statements with try_append_move
+    - King: 8 try_append_move for adjacent squares, four if statements for castling. Each castling check moves the king and calls is_in_check to avoid castling through check.
+
+try_append_move:
+    - Append move if destination is not occupied by the same color. Simple check, calls append_move if it passes.
+
+append_move:
+    - inserts move into allocated array
+    - Executes move (execute_move)
+    - If is_in_check, unexecute_move
+
+generate_moves_CCP:
+    - Same as gen_moves but with variously modified if statements and exclusively append_move instead of try_append_move
+
+is_in_check:
+    - Check adjacencies, knight adjacencies, pawn adjacencies, and loop in every direction.
+
+execute_move:
+    - Update metadata - several ifs
+
+unexecute_move:
+    - Update metadata - several ifs
+
+
+Metadata: (All chars)
+    - castle flags (4 bits)
+    - En passant right (square number)
+    - FMR count (count)
+    - Player to move (bit flag)
+    - White king position (used for is_in_check to avoid looping) (square number)
+    - Black king position (square number) 
+
+Move struct: (all chars)
+    - Source square
+    - Destiniation square
+    - pawn_promotion (doubles as flag and piece to promote to)
+    - Reset FMR flag
+    - Square to initiate en_passant right for, 0 if none
+    - Castling flags: 4 bits, one if that castling right is voided by the move (may already be voided)
+    - Piece id of piece captured, for unexecute_move
+    - Flag if the move is en_passant, for unexecute_move
+------------------------
 
 
