@@ -1,6 +1,9 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <stdio.h>
+#include<inttypes.h>
+
 //Display
 #define SWIDTH 1200
 #define SHEIGHT 800
@@ -69,11 +72,12 @@ typedef struct{
     char fmr_count;//Fifty move rule count
 } metadata_t;//All gamestate info other than board position
 
-
 typedef struct{
     char src;
     char dest;
-    char promo; //=0-knight, 1-bishop, 2-rook, 3-queen
+    char promo; //0-knight, 1-bishop, 2-rook, 3-queen
 } move;
+
+metadata_t MD;
 
 #endif

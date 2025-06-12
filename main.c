@@ -1,9 +1,10 @@
-#include <stdio.h>
-#include <inttypes.h>
 #include "SDL.h"
+
 #include "global.h"
 #include "render.h"
 #include "control.h"
+#include "generate_moves.h"
+#include "search.h"
 
 void init_board(char* board_init);//Initialize board_arr and board struct from FEN string
 
@@ -19,7 +20,6 @@ int main(int argc, char* argv[]){
 
     render_init();
     render_board(-1);
-
     while(1) execute_move(handle_player_input());
 
     render_quit();

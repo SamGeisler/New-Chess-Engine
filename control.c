@@ -1,5 +1,5 @@
 #include "SDL.h"
-#include <stdio.h>
+
 #include "global.h"
 #include "control.h"
 #include "render.h"
@@ -20,6 +20,7 @@ move handle_player_input(){
         render_board(holding);
         while(SDL_PollEvent(&e)){
             SDL_GetMouseState(&mx,&my);
+            printf("%d %d\n",mx,my);
 
             if(e.type==SDL_QUIT){
                 render_quit();
@@ -42,4 +43,8 @@ move handle_player_input(){
         }
     }
     return move_found;
+}
+
+move get_engine_move(){
+
 }

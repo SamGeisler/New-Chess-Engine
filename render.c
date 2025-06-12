@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <unistd.h>
 #include "SDL.h"
 #include "global.h"
 #include "render.h"
@@ -23,8 +21,8 @@ void draw_background(){
     SDL_Rect square = {0,0,PS,PS};
     for(int i = 0; i<8; i++){
         for(int j = 0; j<8; j++){
-            square.x = (SWIDTH-PS*8)/2 + j*PS;
-            square.y = (SHEIGHT - 8*PS)/2 + i*PS;
+            square.x = XMARG + j*PS;
+            square.y = YMARG + i*PS;
             SDL_FillRect(current_surface, &square, (i+j)%2==0 ? LIGHTSPACECOLOR : DARKSPACECOLOR );
         }
     }
@@ -86,7 +84,7 @@ void render_init(){
     screen_surface = SDL_GetWindowSurface(window);
 
 
-    current_surface = load_surface("img/base.bmp");
+    current_surface = SDL_ConvertSurface(screen_surface, screen_surface->format, SDL_SWSURFACE);
     load_piece_surfaces();
     SDL_BlitSurface( current_surface, NULL, screen_surface, NULL);
     SDL_UpdateWindowSurface(window);
