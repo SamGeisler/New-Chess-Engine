@@ -31,6 +31,7 @@
 double PIECE_VALUES[5];
 extern uint64_t knightDestLookup[64];
 extern uint64_t kingDestLookup[64];
+extern uint64_t rookDestLookupTruncated[64];
 
 //Used throughout
 enum colors{
