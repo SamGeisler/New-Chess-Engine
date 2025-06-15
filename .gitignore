@@ -2,3 +2,5 @@
 *.exe
 notes.txt
 .vscode
+testbox.c
+test_output.txt

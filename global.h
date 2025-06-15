@@ -2,7 +2,7 @@
 #define GLOBAL_H
 
 #include <stdio.h>
-#include<inttypes.h>
+#include <inttypes.h>
 
 //Display
 #define SWIDTH 1200
@@ -21,8 +21,16 @@
 
 //Misc. utility
 #define SHIFT(x) (((uint64_t)1)<<x)
+#define NOT_A_FILE 0xFEFEFEFEFEFEFEFE
+#define NOT_H_FILE 0x7F7F7F7F7F7F7F7F
+#define NOT_1_RANK 0x00FFFFFFFFFFFFFF
+#define NOT_8_RANK 0xFFFFFFFFFFFFFF00
+#define RANK_3 0x0000FF0000000000
+#define RANK_6 0x0000000000FF0000
 
 double PIECE_VALUES[5];
+extern uint64_t knightDestLookup[64];
+extern uint64_t kingDestLookup[64];
 
 //Used throughout
 enum colors{
@@ -75,7 +83,7 @@ typedef struct{
 typedef struct{
     char src;
     char dest;
-    char promo; //0-knight, 1-bishop, 2-rook, 3-queen
+    char promo; //0-no promotion, 1-knight, 2-bishop, 3-rook, 4-queen
 } move;
 
 metadata_t MD;

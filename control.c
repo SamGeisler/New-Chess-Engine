@@ -20,7 +20,6 @@ move handle_player_input(){
         render_board(holding);
         while(SDL_PollEvent(&e)){
             SDL_GetMouseState(&mx,&my);
-            printf("%d %d\n",mx,my);
 
             if(e.type==SDL_QUIT){
                 render_quit();

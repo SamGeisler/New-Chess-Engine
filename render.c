@@ -5,6 +5,7 @@
 SDL_Window* window = NULL;
 SDL_Surface* screen_surface = NULL;
 SDL_Surface* current_surface = NULL;
+SDL_Surface* number_surface = NULL;
 
 SDL_Surface* piece_surfaces[13];
 
@@ -26,6 +27,8 @@ void draw_background(){
             SDL_FillRect(current_surface, &square, (i+j)%2==0 ? LIGHTSPACECOLOR : DARKSPACECOLOR );
         }
     }
+    SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
+
 }
 
 
@@ -88,6 +91,7 @@ void render_init(){
     load_piece_surfaces();
     SDL_BlitSurface( current_surface, NULL, screen_surface, NULL);
     SDL_UpdateWindowSurface(window);
+    number_surface = load_surface("img/board_ss.bmp");
 }
 
 void render_quit(){

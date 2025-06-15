@@ -4,5 +4,10 @@ COMPILER_FLAGS =
 
 
 all:
-	gcc $(INCLUDE) $(LIBRARY) -o main main.c render.c control.c generate_moves.c search.c -lmingw32 -lSDL2main -lSDL2
+	gcc $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
 
+debug:
+	gcc $(INCLUDE) $(LIBRARY) -g -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
+
+testbox:
+	gcc -o test testbox.c -lmingw32

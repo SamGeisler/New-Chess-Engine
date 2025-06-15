@@ -1,26 +1,44 @@
 #include "SDL.h"
-
+#include "bb_utils.h"
 #include "global.h"
 #include "render.h"
 #include "control.h"
 #include "generate_moves.h"
-#include "search.h"
+//#include "search.h"
 
+uint64_t knightDestLookup[64] = {0x20400, 0x50800, 0xA1100, 0x142200, 0x284400, 0x508800, 0xA01000, 0x402000, 0x2040004, 0x5080008, 0xA110011, 0x14220022, 0x28440044, 0x50880088, 0xA0100010, 0x40200020, 0x204000402, 0x508000805, 0xA1100110A, 0x1422002214, 0x2844004428, 0x5088008850, 0xA0100010A0, 0x4020002040, 0x20400040200, 0x50800080500, 0xA1100110A00, 0x142200221400, 0x284400442800, 0x508800885000, 0xA0100010A000, 0x402000204000, 0x2040004020000, 0x5080008050000, 0xA1100110A0000, 0x14220022140000, 0x28440044280000, 0x50880088500000, 0xA0100010A00000, 0x40200020400000, 0x204000402000000, 0x508000805000000, 0xA1100110A000000, 0x1422002214000000, 0x2844004428000000, 0x5088008850000000, 0xA0100010A0000000, 0x4020002040000000, 0x400040200000000, 0x800080500000000, 0x1100110A00000000, 0x2200221400000000, 0x4400442800000000, 0x8800885000000000, 0x100010A000000000, 0x2000204000000000, 0x4020000000000, 0x8050000000000, 0x110A0000000000, 0x22140000000000, 0x44280000000000, 0x88500000000000, 0x10A00000000000, 0x20400000000000};
+uint64_t kingDestLookup[64] = {0x302, 0x705, 0xE0A, 0x1C14, 0x3828, 0x7050, 0xE0A0, 0xC040, 0x30203, 0x70507, 0xE0A0E, 0x1C141C, 0x382838, 0x705070, 0xE0A0E0, 0xC040C0, 0x3020300, 0x7050700, 0xE0A0E00, 0x1C141C00, 0x38283800, 0x70507000, 0xE0A0E000, 0xC040C000, 0x302030000, 0x705070000, 0xE0A0E0000, 0x1C141C0000, 0x3828380000, 0x7050700000, 0xE0A0E00000, 0xC040C00000, 0x30203000000, 0x70507000000, 0xE0A0E000000, 0x1C141C000000, 0x382838000000, 0x705070000000, 0xE0A0E0000000, 0xC040C0000000, 0x3020300000000, 0x7050700000000, 0xE0A0E00000000, 0x1C141C00000000, 0x38283800000000, 0x70507000000000, 0xE0A0E000000000, 0xC040C000000000, 0x302030000000000, 0x705070000000000, 0xE0A0E0000000000, 0x1C141C0000000000, 0x3828380000000000, 0x7050700000000000, 0xE0A0E00000000000, 0xC040C00000000000, 0x203000000000000, 0x507000000000000, 0xA0E000000000000, 0x141C000000000000, 0x2838000000000000, 0x5070000000000000, 0xA0E0000000000000, 0x40C0000000000000};
 void init_board(char* board_init);//Initialize board_arr and board struct from FEN string
 
 void update_board_arr();//Update board_arr from bitboards
 void update_bb();//Update borad.bitboards from board_arr
 
-void print_bb(uint64_t bb);
+
 void print_board_arr();
 
 
 int main(int argc, char* argv[]){
+
     init_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     render_init();
     render_board(-1);
-    while(1) execute_move(handle_player_input());
+
+
+    move* moves = (move*)malloc(sizeof(move)*220);
+
+    while(1){
+        //print_bb(board.bitboards[PAWN] & board.bitboards[BLACK]);
+        printf("WHITE MOVES\n");
+        for(int i = 0; i<generate_moves(moves, WHITE); i++) printf("%d -> %d, promo %d\n",moves[i].src,moves[i].dest,moves[i].promo);
+        printf("\n\nBLACK MOVES\n");
+        for(int i = 0; i<generate_moves(moves, BLACK); i++) printf("%d -> %d, promo %d\n",moves[i].src,moves[i].dest,moves[i].promo);
+        printf("\n\n");
+        
+
+        execute_move(handle_player_input());
+        update_bb();
+    } 
 
     render_quit();
     return 0;
@@ -118,18 +136,9 @@ void update_bb(){
     for(int i = 0; i<8; i++) board.bitboards[i] = 0;
     for(int i = 0; i<64; i++){
         if(board_arr[i]){
-            //printf("i=%d, b[i]=%d, bb1=%d, bb2=%d\n",i,board_arr[i],board_arr[i]>=7,((board_arr[i]-1)%6)+2);
             board.bitboards[board_arr[i]>=7] |= SHIFT(i);//Color
             board.bitboards[((board_arr[i]-1)%6) +2] |= SHIFT(i);//Piece
         }
-    }
-}
-
-void print_bb(uint64_t bb){
-    printf("Bitboard: %X\n",bb);
-    for(int i = 0; i<64; i++){
-        printf("%c ", (SHIFT(i) & bb) ? 'X' : '.');
-        if(i%8==7) printf("\n");
     }
 }
 
