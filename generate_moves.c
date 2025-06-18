@@ -7,13 +7,12 @@
 void gen_pawn_white(uint64_t bb, move* move_arr);
 void gen_pawn_black(uint64_t bb, move* move_arr);
 
-void (*gen_pawn[2]) (uint64_t, move*)= {&gen_pawn_white,&gen_pawn_black};
+void (*gen_pawn[2]) (uint64_t, move*) = {&gen_pawn_white,&gen_pawn_black};
 void gen_knight(uint64_t bb, move* move_arr, int color);
 void gen_king(uint64_t bb, move* move_arr, int color);
-
-uint64_t gen_bishop();
-uint64_t gen_rook();
-uint64_t gen_queen();
+void gen_rook(uint64_t bb, move* move_arr, int color);
+void gen_bishop(uint64_t bb, move* move_arr, int color);
+void gen_queen(uint64_t bb, move* move_arr, int color);
 
 
 static int m_i;//Move array index
@@ -22,8 +21,10 @@ int generate_moves(move* move_arr, int color){
     m_i = 0;
     gen_pawn[color](board.bitboards[color] & board.bitboards[PAWN], move_arr);
     gen_knight(board.bitboards[color] & board.bitboards[KNIGHT], move_arr, color);
+    gen_bishop(board.bitboards[color] & board.bitboards[BISHOP], move_arr, color);
+    gen_rook(board.bitboards[color] & board.bitboards[ROOK], move_arr, color);
+    gen_queen(board.bitboards[color] & board.bitboards[QUEEN], move_arr, color);
     gen_king(board.bitboards[color] & board.bitboards[KING], move_arr, color);
-    
 
     return m_i;
 }
@@ -37,7 +38,7 @@ void gen_knight(uint64_t bb, move* move_arr, int color){
 
         bb &= ~SHIFT(src_bsf);
 
-        dest_bb = knightDestLookup[src_bsf];
+        dest_bb = knightDest[src_bsf];
 
 
         dest_bb &= ~board.bitboards[color];
@@ -55,13 +56,13 @@ void gen_knight(uint64_t bb, move* move_arr, int color){
 
 void gen_king(uint64_t bb, move* move_arr, int color){
     uint64_t dest_bb;
-    int src_bsf;//First bsf result (location of knight)
+    int src_bsf;//First bsf result (location of king)
     int dest_bsf;//Second bsf result (destination)
     while(bb){
         src_bsf = bitScanForward(bb);
         bb &= ~SHIFT(src_bsf);
 
-        dest_bb = kingDestLookup[src_bsf];
+        dest_bb = kingDest[src_bsf];
         dest_bb &= ~board.bitboards[color];
         
         while(dest_bb){
@@ -70,6 +71,88 @@ void gen_king(uint64_t bb, move* move_arr, int color){
 
             move_arr[m_i] = (move){src_bsf,dest_bsf,0};
             //make printf("king insert at %d: %d %d\n",m_i,src_bsf, dest_bsf);
+
+            m_i++;
+        }
+    }
+}
+
+void gen_rook(uint64_t bb, move* move_arr, int color){
+    uint64_t dest_bb;
+    int src_bsf;//First bsf result (location of rook)
+    int dest_bsf;//Second bsf result (destination)
+
+    while(bb){
+        src_bsf = bitScanForward(bb);
+        bb &= ~SHIFT(src_bsf);
+
+        uint64_t int_bb = rookDestTrunc[src_bsf] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
+        int index = (int_bb * rookMN[src_bsf]) >> (64-rookMN_w[src_bsf]);
+        dest_bb = rookDestInt[src_bsf][index];
+        
+        dest_bb &= ~board.bitboards[color];
+
+        while(dest_bb){
+            dest_bsf = bitScanForward(dest_bb);
+            dest_bb &= ~SHIFT(dest_bsf);
+
+            move_arr[m_i] = (move){src_bsf,dest_bsf,0};
+
+            m_i++;
+        }
+    }
+}
+
+void gen_bishop(uint64_t bb, move* move_arr, int color){
+    uint64_t dest_bb;
+    int src_bsf;//First bsf result (location of bishop)
+    int dest_bsf;//Second bsf result (destination)
+
+    while(bb){
+        src_bsf = bitScanForward(bb);
+        bb &= ~SHIFT(src_bsf);
+
+        uint64_t int_bb = bishopDestTrunc[src_bsf] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
+        int index = (int_bb * bishopMN[src_bsf]) >> (64-bishopMN_w[src_bsf]);
+        dest_bb = bishopDestInt[src_bsf][index];
+        
+        dest_bb &= ~board.bitboards[color];
+
+        while(dest_bb){
+            dest_bsf = bitScanForward(dest_bb);
+            dest_bb &= ~SHIFT(dest_bsf);
+
+            move_arr[m_i] = (move){src_bsf,dest_bsf,0};
+
+            m_i++;
+        }
+    }
+}
+
+void gen_queen(uint64_t bb, move* move_arr, int color){
+    uint64_t dest_bb;
+    int src_bsf;//First bsf result (location of queen)
+    int dest_bsf;//Second bsf result (destination)
+
+    while(bb){
+        src_bsf = bitScanForward(bb);
+        bb &= ~SHIFT(src_bsf);
+
+        uint64_t int_bb = rookDestTrunc[src_bsf] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
+        int index = (int_bb * rookMN[src_bsf]) >> (64-rookMN_w[src_bsf]);
+        dest_bb = rookDestInt[src_bsf][index];
+
+        int_bb = bishopDestTrunc[src_bsf] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
+        index = (int_bb * bishopMN[src_bsf]) >> (64-bishopMN_w[src_bsf]);
+        dest_bb |= bishopDestInt[src_bsf][index];
+
+        dest_bb &= ~board.bitboards[color];
+        
+        while(dest_bb){
+            dest_bsf = bitScanForward(dest_bb);
+            dest_bb &= ~SHIFT(dest_bsf);
+
+            move_arr[m_i] = (move){src_bsf,dest_bsf,0};
 
             m_i++;
         }

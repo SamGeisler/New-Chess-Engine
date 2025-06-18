@@ -9,5 +9,8 @@ all:
 debug:
 	gcc $(INCLUDE) $(LIBRARY) -g -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
 
-testbox:
-	gcc -o test testbox.c -lmingw32
+test:
+	g++ -g -O0 -fno-inline -std=c++17 -o test testbox.cpp -lmingw32
+
+testNDB:
+	g++  -o test testbox.cpp -lmingw32

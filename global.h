@@ -20,7 +20,7 @@
 #define MAXDEPTH 6
 
 //Misc. utility
-#define SHIFT(x) (((uint64_t)1)<<x)
+#define SHIFT(x) (((uint64_t)1)<<(x))
 #define NOT_A_FILE 0xFEFEFEFEFEFEFEFE
 #define NOT_H_FILE 0x7F7F7F7F7F7F7F7F
 #define NOT_1_RANK 0x00FFFFFFFFFFFFFF
@@ -29,8 +29,26 @@
 #define RANK_6 0x0000000000FF0000
 
 double PIECE_VALUES[5];
-extern uint64_t knightDestLookup[64];
-extern uint64_t kingDestLookup[64];
+
+//Bitboards of possible destinations (assuming empty board) for each source square
+extern uint64_t knightDest[64];
+extern uint64_t kingDest[64];
+extern uint64_t rookDestTrunc[64];//Excludes last dest squares in row/col
+extern uint64_t bishopDestTrunc[64];//Excludes last dest squares in diagonal
+
+//Sliding piece magic numbers for each source square
+extern uint64_t rookMN[64];
+extern uint64_t bishopMN[64];
+
+//Compression width of corresponding magic numbers
+extern int rookMN_w[64];
+extern int bishopMN_w[64];
+
+//Sliding piece destination BB for each source square and piece intersection arrangements allocated & loaded at runtime
+//Indexed by magic number multiplication
+uint64_t* rookDestInt[64];
+uint64_t* bishopDestInt[64];
+
 
 //Used throughout
 enum colors{
