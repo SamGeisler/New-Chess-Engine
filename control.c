@@ -5,8 +5,38 @@
 #include "render.h"
 
 void execute_move(move m){
+    int color = board_arr[m.src]>8;
+    int color_mod = (2*color-1);//-1 for WHITE, 1 for BLACK
+    int piece = board_arr[m.src]%8;
+    int captured = board_arr[m.dest]%8;
     board_arr[m.dest] = board_arr[m.src];
-    board_arr[m.src] = 0;
+    board_arr[m.src] = EMPTY;
+
+    //Remove moving piece from source
+    board.bitboards[color] &= ~SHIFT(m.src);
+    board.bitboards[piece] &= ~SHIFT(m.src);
+
+    //Remove captured piece from destination
+    board.bitboards[1-color] &= ~SHIFT(m.dest);
+    if(captured) board.bitboards[captured] &= ~SHIFT(m.dest);
+
+    //Add moving piece to destination
+    board.bitboards[color] |= SHIFT(m.dest);
+    board.bitboards[piece] |= SHIFT(m.dest);
+    
+    //Handle enpassant capture
+    if(m.dest==MD.ep_right && piece==PAWN){
+        int captured_square = MD.ep_right - 8*color_mod;
+        board.bitboards[1-color] &= ~SHIFT(captured_square);
+        board.bitboards[PAWN] &= ~SHIFT(captured_square);
+        board_arr[captured_square] = EMPTY;
+    }
+
+    //Update enpassant metadata
+    MD.ep_right = 0;
+    if(piece==PAWN && m.dest == m.src + color_mod*16){
+        MD.ep_right = m.dest - color_mod*8;
+    }
 }
 
 move handle_player_input(){

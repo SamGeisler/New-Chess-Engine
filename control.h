@@ -10,6 +10,7 @@ move handle_player_input();
 
 move get_engine_move();
 
+//Update bitboards and board_arr
 void execute_move(move m);//update global game state, assumes valid move.
 void unexecute_move(move m);//Restore board state but not metadata
 

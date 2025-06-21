@@ -68,15 +68,19 @@ enum pieces{
     KING
 };
 
-//Only used in board_arr and for rendering
+//Used in board_arr and for rendering 
+//Equal to the above enum, +8 for black pieces
 enum board_array_values{
     EMPTY,
+    NULL_PIECE1,
     WHITE_PAWN,
     WHITE_KNIGHT,
     WHITE_BISHOP,
     WHITE_ROOK,
     WHITE_QUEEN,
     WHITE_KING,
+    NULL_PIECE2,
+    NULL_PIECE3,
     BLACK_PAWN,
     BLACK_KNIGHT,
     BLACK_BISHOP,
@@ -85,8 +89,7 @@ enum board_array_values{
     BLACK_KING
 };
 
-unsigned int board_arr[64];//Only used for rendering and controls - not used at all by get_ai_move. Updates to match bitboards after AI makes its move
-//White pieces are pawn=1, knight=2, bishop=3,rook=4,queen=5,king=6, +8 for black pieces
+unsigned int board_arr[64];//Maintained along side bitboards, and used during move generation.
 
 struct board_t{
     uint64_t bitboards[8];//Same order as enum: White pieces, black pieces, all pawns, all knights, all bishops, all rooks, all queens, all kings
@@ -94,7 +97,7 @@ struct board_t{
 
 typedef struct{
     char castle_flags;//Bottom 4 bits - white ks, white qs, black ks, black qs (1 indicates available)
-    char ep_right;//Location of valid space to perform en passant from, 0 if none
+    char ep_right;//Location of valid space to perform en passant to, 0 if none
     char fmr_count;//Fifty move rule count
 } metadata_t;//All gamestate info other than board position
 

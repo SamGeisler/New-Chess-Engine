@@ -7,7 +7,7 @@ SDL_Surface* screen_surface = NULL;
 SDL_Surface* current_surface = NULL;
 SDL_Surface* number_surface = NULL;
 
-SDL_Surface* piece_surfaces[13];
+SDL_Surface* piece_surfaces[16];
 
 SDL_Surface* load_surface(char* path){
     SDL_Surface* loaded = SDL_LoadBMP(path);
@@ -102,6 +102,7 @@ void render_quit(){
 
     //Free piece surfaces
     for(int i = WHITE_PAWN; i<=BLACK_KING; i++){
+        if(i==NULL_PIECE2 || i==NULL_PIECE3) continue;
         SDL_FreeSurface(piece_surfaces[i]);
     }
 

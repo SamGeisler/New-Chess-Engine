@@ -1,3 +1,15 @@
+/*
+TODO: Complete move generation
+    - Ensure legality
+    X Implement en passant
+    - Implement castling
+    - Look into and decide about drawing
+    - Game end
+*/
+
+
+
+
 #include "SDL.h"
 #include "bb_utils.h"
 #include "global.h"
@@ -17,12 +29,9 @@ uint64_t rookMN[64] = {0xC9873C62385CB89F, 0x10C31FAD8CEAA30D, 0xCF5E04D70671F0A
 uint64_t bishopMN[64] = {0x3D40145521470103, 0x606D029090D0048, 0x28D01B0A0F240137, 0x5A07EA7CF43E9D4F, 0x4624042260BCCDF3, 0x2C60304602EEDFE, 0xA043EC039587147D, 0xE863220910051055, 0xF43CBC84500C4D02, 0x803E48010803A905, 0xBF32C1DE02510B20, 0x509B5820D4C485C2, 0x1FAFD41C20709799, 0x6D96C2080E1952A3, 0x547306C606304007, 0x2B6CB60B04063E86, 0xA1F1FC750FD00720, 0x652422D04508450B, 0x4E5814100BC31460, 0x3B27B8AF68E01031, 0x8C0BFE72836BEF99, 0x24719D233B0B73C3, 0x89FD8EC7541057F7, 0xE9EB05DE2C060E04, 0x82604587B8086818, 0x327B709A600A0E06, 0x69791C9646F632DF, 0xCAA10210E5F0803A, 0xA51846AE650F6F41, 0x53C4398F9EEF70F2, 0x294A508EE08062D, 0xC6EB02C4E1041F92, 0x9CB22020CFFD082E, 0x937D1C2084F2581A, 0xB44E4128145007C0, 0x5E384DB8E5A5A2, 0xD86D7DB9A8F6E8EB, 0x1C3A5BAB004E0097, 0x59838150323D701, 0x6F711AC903B6011E, 0xFEE91420E04074A1, 0x4D440B0818616651, 0xAEAB8EF2EFF9B3DC, 0x210F2E0972561333, 0xF8B57A9685A15280, 0x5C403410C4106B80, 0x5E065C8D020A8C01, 0x791C388601421206, 0xA043EC039587147D, 0x18C0A40744300FE4, 0x21E28AEDA8D00698, 0x22723A2E42021C25, 0x441A2151B20E0043, 0x5DC3E0B4694A0187, 0x34D1F09A27E0D2FE, 0x606D029090D0048, 0xE863220910051055, 0x2B6CB60B04063E86, 0x643054DB6C16180D, 0x791C388601421206, 0x69DFDD4D701E1601, 0x330C10C8F11B2200, 0xF43CBC84500C4D02, 0x3D40145521470103};
 
 void init_board(char* board_init);//Initialize board_arr and board struct from FEN string
-
-void update_board_arr();//Update board_arr from bitboards
-void update_bb();//Update borad.bitboards from board_arr
+void update_board_arr();//Restores board_arr from bitboards
+void update_bb();//Restore bitboards from board_rr
 void loadDestBB();//Load sliding piece intersections destination bitboards (rookDestInt & bishopDestInt)
-
-
 void print_board_arr();
 
 
@@ -36,6 +45,7 @@ int main(int argc, char* argv[]){
     move* moves = (move*)malloc(sizeof(move)*220);
 
     while(1){
+        printf("EP right: %d\n",MD.ep_right);
         printf("\nWHITE MOVES:\n");
         for(int i = 0; i<generate_moves(moves,WHITE); i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
@@ -44,10 +54,13 @@ int main(int argc, char* argv[]){
         for(int i = 0; i<generate_moves(moves,BLACK); i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
         }
-
-        execute_move(handle_player_input());
-        update_bb();
+        
+        move pmove = handle_player_input();
+        execute_move(pmove);
+    
     } 
+
+    free(moves);
 
     render_quit();
     return 0;
@@ -171,7 +184,7 @@ void update_board_arr(){
         pos = 0;
         while(current_bb){
             if(current_bb & 1){
-                board_arr[pos] = i-1;
+                board_arr[pos] = i;
             }
             current_bb >>=1;
             pos++;
@@ -181,7 +194,7 @@ void update_board_arr(){
         pos = 0;
         while(current_bb){
             if(current_bb & 1){
-                board_arr[pos] = i+5;
+                board_arr[pos] = i+8;
             }
             current_bb >>=1;
             pos++;
@@ -193,8 +206,8 @@ void update_bb(){
     for(int i = 0; i<8; i++) board.bitboards[i] = 0;
     for(int i = 0; i<64; i++){
         if(board_arr[i]){
-            board.bitboards[board_arr[i]>=7] |= SHIFT(i);//Color
-            board.bitboards[((board_arr[i]-1)%6) +2] |= SHIFT(i);//Piece
+            board.bitboards[ board_arr[i]>8 ] |= SHIFT(i);//Color
+            board.bitboards[ board_arr[i]%8 ] |= SHIFT(i);//Piece
         }
     }
 }
@@ -202,22 +215,23 @@ void update_bb(){
 void print_board_arr(){
     char c;
     for(int i = 0; i<64; i++){
-        switch(i){
-            case WHITE_PAWN: c='P';
-            case WHITE_KNIGHT: c='N';
-            case WHITE_BISHOP: c='B';
-            case WHITE_ROOK: c='R';
-            case WHITE_QUEEN: c='Q';
-            case WHITE_KING: c='K';
-            case BLACK_PAWN: c='p';
-            case BLACK_KNIGHT: c='n';
-            case BLACK_BISHOP: c='b';
-            case BLACK_ROOK: c='r';
-            case BLACK_QUEEN: c='q';
-            case BLACK_KING: c='k';
+        switch(board_arr[i]){
+            case EMPTY: c = '.'; break;
+            case WHITE_PAWN: c='P';  break;
+            case WHITE_KNIGHT: c='N'; break;
+            case WHITE_BISHOP: c='B'; break;
+            case WHITE_ROOK: c='R'; break;
+            case WHITE_QUEEN: c='Q'; break;
+            case WHITE_KING: c='K'; break;
+            case BLACK_PAWN: c='p'; break;
+            case BLACK_KNIGHT: c='n'; break;
+            case BLACK_BISHOP: c='b'; break;
+            case BLACK_ROOK: c='r'; break;
+            case BLACK_QUEEN: c='q'; break;
+            case BLACK_KING: c='k'; break;
         }
 
-        printf("%c ");
+        printf("%c ",c);
         if(i%8==7) printf("\n");
     }
 }
