@@ -4,16 +4,16 @@ COMPILER_FLAGS =
 
 
 all:
-	gcc $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
+	gcc $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.c render.c control.c generate_moves.c bb_utils.c precompute.c -lmingw32 -lSDL2main -lSDL2
 debug:
 	gcc $(INCLUDE) $(LIBRARY) -g -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
 
 perft:
-	gcc -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
+	gcc $(COMPILER_FLAGS) -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
 perftDB:
-	gcc -g -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
+	gcc $(COMPILER_FLAGS) -g -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
 
 precompute:
-	g++ -g -O0 -fno-inline -std=c++17 -o precompute precompute.cpp -lmingw32
+	g++ $(COMPILER_FLAGS) -g -O0 -fno-inline -std=c++17 -o precompute precompute.cpp -lmingw32
 precomputeNDB:
-	g++  -o precompute precompute.cpp -lmingw32
+	g++ $(COMPILER_FLAGS) -o precompute precompute.cpp -lmingw32

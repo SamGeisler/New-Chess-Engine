@@ -1,5 +1,4 @@
 #include "global.h"
-#include "bb_utils.h"
 
 const int index64[64] = {
     0,  1, 48,  2, 57, 49, 28,  3,

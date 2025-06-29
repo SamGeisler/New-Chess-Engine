@@ -1,6 +1,5 @@
 #ifndef BB_UTILS_H
 #define BB_UTILS_H
-#include "global.h"
 
 extern const int index64[64];
 

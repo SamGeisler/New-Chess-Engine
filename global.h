@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <stdlib.h>
+
+#include "bb_utils.h"
 
 //Display
 #define SWIDTH 1200
@@ -18,7 +21,7 @@
 #define YMARG ((SHEIGHT - PS*8)/2)
 
 //Engine/game settings
-int AICOLOR;
+extern int AICOLOR;
 #define MAXDEPTH 6
 
 //Misc. utility
@@ -35,7 +38,7 @@ int AICOLOR;
 #define BLACK_KS_CASTLE_MASK 0x0000000000000070
 #define BLACK_QS_CASTLE_MASK 0x000000000000001A
 
-double PIECE_VALUES[5];
+extern double PIECE_VALUES[5];
 
 //Bitboards for ranks, files, and diagonals
 extern uint64_t RANKS[8];
@@ -60,13 +63,12 @@ extern int rookMN_w[64];
 extern int bishopMN_w[64];
 
 //InBetweenLookup (bitboard of squares between two given squares, exclusive)
-uint64_t inBetween[64][64];
+extern uint64_t inBetween[64][64];
 
 //Sliding piece destination BB for each source square and piece intersection arrangements allocated & loaded at runtime
 //Indexed by magic number multiplication
-uint64_t* rookDestInt[64];
-uint64_t* bishopDestInt[64];
-
+extern uint64_t* rookDestInt[64];
+extern uint64_t* bishopDestInt[64];
 
 //Used throughout
 enum colors{
@@ -107,24 +109,20 @@ enum board_array_values{
     BLACK_KING
 };
 
-unsigned int board_arr[64];//Maintained along side bitboards, and used during move generation.
 
-struct board_t{
+
+typedef struct {
     uint64_t bitboards[8];//Same order as enum: White pieces, black pieces, all pawns, all knights, all bishops, all rooks, all queens, all kings
-} board;
-
+} board_t;
 typedef struct{
     char castle_flags;//[3] - white ks, [2] - white qs, [1] - black ks, [0] - black qs (1 indicates available)
     char ep_right;//Location of valid space to perform en passant to, 0 if none
     int fmr_count;//Half move rule count
 } metadata_t;//All gamestate info other than board position
-/*
-Tentative approach to draws:
-- Ignore repetitions until a transposition table is implemented, see if it is easy/feasible then
-- No way to offer a draw/resign
-- Implement stalemate and FMR.
-*/
 
+extern board_t board;
+extern metadata_t MD;
+extern unsigned int board_arr[64];//Maintained along side bitboards, and used during move generation.
 
 typedef struct{
     char src;
@@ -132,6 +130,5 @@ typedef struct{
     char promo; //0-no promotion, 1-knight, 2-bishop, 3-rook, 4-queen
 } move;
 
-metadata_t MD;
 
 #endif

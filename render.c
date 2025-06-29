@@ -1,7 +1,6 @@
 #include "SDL.h"
 #include "global.h"
 #include "render.h"
-#include "bb_utils.h"
 
 SDL_Window* window = NULL;
 SDL_Surface* screen_surface = NULL;
@@ -35,7 +34,7 @@ void draw_background(uint64_t bb){
             SDL_FillRect(current_surface, &square, color);
         }
     }
-    SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
+    //SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
 
 }
 
