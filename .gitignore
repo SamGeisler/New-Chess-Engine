@@ -2,7 +2,6 @@
 *.exe
 notes.txt
 .vscode
-testbox.cpp
 tt.txt
 test_output.txt
 MN_gen_log.txt
