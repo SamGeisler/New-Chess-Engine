@@ -13,7 +13,7 @@ perft:
 perftDB:
 	gcc -g -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
 
-test:
-	g++ -g -O0 -fno-inline -std=c++17 -o test testbox.cpp -lmingw32
-testNDB:
-	g++  -o test testbox.cpp -lmingw32
+precompute:
+	g++ -g -O0 -fno-inline -std=c++17 -o precompute precompute.cpp -lmingw32
+precomputeNDB:
+	g++  -o precompute precompute.cpp -lmingw32
