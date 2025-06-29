@@ -1,6 +1,7 @@
 #include "SDL.h"
 #include "global.h"
 #include "render.h"
+#include "bb_utils.h"
 
 SDL_Window* window = NULL;
 SDL_Surface* screen_surface = NULL;
@@ -17,14 +18,21 @@ SDL_Surface* load_surface(char* path){
     return optimized;
 }
 
-void draw_background(){
+void draw_background(uint64_t bb){
     SDL_FillRect(current_surface, NULL, BGCOLOR);
     SDL_Rect square = {0,0,PS,PS};
     for(int i = 0; i<8; i++){
         for(int j = 0; j<8; j++){
             square.x = XMARG + j*PS;
             square.y = YMARG + i*PS;
-            SDL_FillRect(current_surface, &square, (i+j)%2==0 ? LIGHTSPACECOLOR : DARKSPACECOLOR );
+
+            int color;
+            if(bb & SHIFT(8*i +j))
+                color =  ((i+j)%2==0 ? LIGHTATTACKING : DARKATTACKING);
+            else 
+                color = ((i+j)%2==0 ? LIGHTSPACECOLOR : DARKSPACECOLOR);
+
+            SDL_FillRect(current_surface, &square, color);
         }
     }
     SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
@@ -47,17 +55,17 @@ void load_piece_surfaces(){
     piece_surfaces[BLACK_KING] = load_surface("img/black_king.bmp");
 }
 
-void render_board(int holding){
+void render_board(int holding, uint64_t bb){
 
-    draw_background();
-    if(AICOLOR==1){
+    draw_background(bb);
+    if(1){
         for(int i = 0; i<64; i++){
             if(board_arr[i] && (holding==-1 || i!=holding)){
                 SDL_Rect loc_rect = {XMARG + PS*(i%8), YMARG + PS*(i/8), PS, PS};
                 SDL_BlitScaled(piece_surfaces[board_arr[i]], NULL, current_surface, &loc_rect);
             }
         }
-    } else {
+    } else {//Later board flipping for black player
         for(int i = 0; i<64; i++){
             if(board_arr[63-i] && (holding==-1 || 63-i!=holding)){
                 SDL_Rect loc_rect = {XMARG + PS*(i%8), YMARG + PS*(i/8), PS, PS};

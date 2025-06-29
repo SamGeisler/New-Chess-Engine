@@ -1,14 +1,12 @@
 /*
 TODO: Complete move generation
-    - Ensure legality
+    X Ensure legality
     X Implement en passant
-    - Implement castling
-    - Look into and decide about drawing
+    X Implement castling
+    X Look into and decide about drawing
     - Game end
+    - Test move generation
 */
-
-
-
 
 #include "SDL.h"
 #include "bb_utils.h"
@@ -32,30 +30,37 @@ void init_board(char* board_init);//Initialize board_arr and board struct from F
 void update_board_arr();//Restores board_arr from bitboards
 void update_bb();//Restore bitboards from board_rr
 void loadDestBB();//Load sliding piece intersections destination bitboards (rookDestInt & bishopDestInt)
+void loadIB();//Load inbetween bitboard data
 void print_board_arr();
 
-
 int main(int argc, char* argv[]){
+    loadIB();
     loadDestBB();
     init_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     render_init();
-    render_board(-1);
+    render_board(-1,0);
 
     move* moves = (move*)malloc(sizeof(move)*220);
 
     while(1){
-        printf("EP right: %d\n",MD.ep_right);
-        printf("\nWHITE MOVES:\n");
+        printf("Castling rights: %d %d %d %d\n",!!(MD.castle_flags&8),!!(MD.castle_flags&4),!!(MD.castle_flags&2),!!(MD.castle_flags&1));
+        /*printf("\nWHITE MOVES:\n");
         for(int i = 0; i<generate_moves(moves,WHITE); i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
-        }
-        printf("\nBLACK MOVES:\n");
+        }*/
+        AICOLOR = BLACK;
+        move pmove = handle_player_input(get_pinned(bitScanForward(board.bitboards[WHITE] & board.bitboards[KING]), WHITE));
+        execute_move(pmove);
+
+        /*printf("\nBLACK MOVES:\n");
         for(int i = 0; i<generate_moves(moves,BLACK); i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
-        }
-        
-        move pmove = handle_player_input();
+        }*/
+        //print_bb(board.bitboards[KING]);
+        //print_bb(board.bitboards[PAWN]);
+        AICOLOR = WHITE;
+        pmove = handle_player_input(get_pinned(bitScanForward(board.bitboards[BLACK] & board.bitboards[KING]), BLACK));
         execute_move(pmove);
     
     } 
@@ -115,8 +120,22 @@ void loadDestBB(){
     fclose(int_fptr);
 }
 
+void loadIB(){
+    FILE* fptr = fopen("ib.txt","r");
+    for(int i = 0; i<64; i++){
+        for(int j = 0; j<64; j++){
+            fscanf(fptr, "%llX",&(inBetween[i][j]));
+        }
+    }
+    
+    fclose(fptr);
+}
 
 void init_board(char* board_init){
+    //Initialize metadata
+    MD.castle_flags = 0xF;
+    MD.ep_right = 0;
+
     for(int i = 0;i<64; i++) board_arr[i] = EMPTY;
     int i = 0;
     int pos = 0;
@@ -235,3 +254,12 @@ void print_board_arr(){
         if(i%8==7) printf("\n");
     }
 }
+
+
+uint64_t FILES[8] = {0x0101010101010101, 0x0202020202020202, 0x0404040404040404, 0x0808080808080808, 0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080};
+uint64_t RANKS[8] = {0xFF00000000000000, 0x00FF000000000000, 0x0000FF0000000000, 0x000000FF00000000, 0x00000000FF000000, 0x0000000000FF0000, 0x000000000000FF00, 0x00000000000000FF};
+uint64_t DIAGONALS_NE[15] = {0x1, 0x102, 0x10204, 0x1020408, 0x102040810, 0x10204081020, 0x1020408102040, 0x102040810204080, 0x204081020408000, 0x408102040800000, 0x810204080000000, 0x1020408000000000, 0x2040800000000000, 0x4080000000000000, 0x8000000000000000};
+uint64_t DIAGONALS_NW[15] = {0x80, 0x8040, 0x804020, 0x80402010, 0x8040201008, 0x804020100804, 0x80402010080402, 0x8040201008040201, 0x4020100804020100, 0x2010080402010000, 0x1008040201000000, 0x804020100000000, 0x402010000000000, 0x201000000000000, 0x100000000000000};
+
+int diagLU_NE[64] = {0, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9, 10, 4, 5, 6, 7, 8, 9, 10, 11, 5, 6, 7, 8, 9, 10, 11, 12, 6, 7, 8, 9, 10, 11, 12, 13, 7, 8, 9, 10, 11, 12, 13, 14};
+int diagLU_NW[64] = {7, 6, 5, 4, 3, 2, 1, 0, 8, 7, 6, 5, 4, 3, 2, 1, 9, 8, 7, 6, 5, 4, 3, 2, 10, 9, 8, 7, 6, 5, 4, 3, 11, 10, 9, 8, 7, 6, 5, 4, 12, 11, 10, 9, 8, 7, 6, 5, 13, 12, 11, 10, 9, 8, 7, 6, 14, 13, 12, 11, 10, 9, 8, 7};

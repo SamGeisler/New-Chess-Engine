@@ -4,64 +4,169 @@
 #include "control.h"
 
 //All of the following return a bitboard of possible destinations (disregarding same-color collisions), which is converted into move structs in generate_moves
-void gen_pawn_white(uint64_t bb, move* move_arr);
-void gen_pawn_black(uint64_t bb, move* move_arr);
-void gen_ep_white(move* move_arr);
-void gen_ep_black(move* move_arr);
+uint64_t gen_pawn_white(uint64_t pawn_pos);
+uint64_t gen_pawn_black(uint64_t pawn_pos);
 
-void (*gen_pawn[2]) (uint64_t, move*) = {&gen_pawn_white,&gen_pawn_black};
-void (*gen_enpassant[2]) (move*) = {&gen_ep_white, &gen_ep_black};
+uint64_t (*gen_pawn_ptr[2]) (uint64_t) = {&gen_pawn_white,&gen_pawn_black};
+uint64_t gen_pawn(int src, int color);
 
 //Get bitboard of possible destinations from bitboard of pieces to move
+//These do not exclude same-color collisions
 uint64_t gen_knight(int src, int color);
 uint64_t gen_bishop(int src, int color);
 uint64_t gen_rook(int src, int color);
 uint64_t gen_queen(int src, int color);
 uint64_t gen_king(int src, int color);
 
-uint64_t (*get_piece_dest_bb[5]) (int, int) = {&gen_knight, &gen_bishop, &gen_rook, &gen_queen, &gen_king};
+uint64_t (*get_piece_dest_bb[6]) (int, int) = {&gen_pawn, &gen_knight, &gen_bishop, &gen_rook, &gen_queen, &gen_king};
 
 void append_moves(int src, uint64_t dest_bb, move* move_arr);
+
+uint64_t gen_xray_rook(uint64_t pieces, uint64_t blockers, int src);
+uint64_t gen_xray_bishop(uint64_t pieces, uint64_t blockers, int src);
+
 
 
 static int m_i;//Move array index
 
 int generate_moves(move* move_arr, int color){
+    if(is_in_check(color)){
+        return generate_moves_check(move_arr,color);
+    }
     m_i = 0;
-    //gen_pawn[color](board.bitboards[color] & board.bitboards[PAWN], move_arr);
-    gen_enpassant[color](move_arr);
 
-    for(int piece = KNIGHT; piece<=KING; piece++){
+    int king_pos = bitScanForward(board.bitboards[KING] & board.bitboards[color]);
+    uint64_t pinned = get_pinned(king_pos, color);
+
+    for(int piece = PAWN; piece<=KING; piece++){
+
         uint64_t src_bb = board.bitboards[color] & board.bitboards[piece];
+        
+        uint64_t pinned_to_move = pinned & src_bb;
+        src_bb ^= pinned_to_move;
+
         while(src_bb){
             int src_bsf = bitScanForward(src_bb);//Index of leftmost piece
             src_bb &= ~SHIFT(src_bsf);
 
-            //append_moves(src_bsf, get_piece_dest_bb[piece-3](src_bsf, color), move_arr);
+            append_moves(src_bsf, get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color], move_arr);
+        }
+
+        while(pinned_to_move){
+            int src_bsf = bitScanForward(pinned_to_move);
+            pinned_to_move &= ~SHIFT(src_bsf);
+
+            uint64_t dest_bb = get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color];
+
+            if(src_bsf%8 == king_pos%8){
+                dest_bb &= FILES[src_bsf%8];
+            } else if(src_bsf/8 == king_pos/8){
+                dest_bb &= RANKS[src_bsf/8];
+            } else if(diagLU_NE[src_bsf]==diagLU_NE[king_pos]){
+                dest_bb &= DIAGONALS_NE[diagLU_NE[src_bsf]];
+            } else if(diagLU_NW[src_bsf] == diagLU_NW[king_pos]){
+                dest_bb &= DIAGONALS_NW[diagLU_NW[src_bsf]];
+            }
+
+            append_moves(src_bsf, dest_bb, move_arr);
+
         }
     }
 
     return m_i;
 }
 
+int generate_moves_check(move* move_arr, int color){
+    m_i = 0;
+
+    uint64_t king_bb = board.bitboards[color] & board.bitboards[KING];
+    int king_pos = bitScanForward(king_bb);
+
+    uint64_t pinned = get_pinned(king_pos, color);
+
+    uint64_t sliding_attackers = gen_rook(king_pos, color) & (board.bitboards[ROOK] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+    sliding_attackers |= gen_bishop(king_pos, color) & (board.bitboards[BISHOP] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+    int numSliding = count_bits(sliding_attackers);
+
+    uint64_t pawn_knight_attackers = gen_knight(king_pos, color) & board.bitboards[1-color] & board.bitboards[KNIGHT];
+    if(color==WHITE){
+        pawn_knight_attackers |=  ( (king_bb >> 7) | (king_bb >> 9) ) & board.bitboards[BLACK] & board.bitboards[PAWN];
+    } else {
+        pawn_knight_attackers |=  ( (king_bb << 7) | (king_bb << 9) ) & board.bitboards[WHITE] & board.bitboards[PAWN];
+    }
+    int numPK = count_bits(pawn_knight_attackers);
+
+
+    if(numSliding && numPK || numSliding > 2 || numPK >2){
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color], move_arr);
+    } else {
+        //Bitboard of legal destination squares: If single sliding attacker, inbetween or capture. If single other attacker, only capture
+        uint64_t check_restriction_mask = numPK ? pawn_knight_attackers : inBetween[king_pos][bitScanForward(sliding_attackers)] | sliding_attackers;
+        
+        for(int piece = PAWN; piece<=QUEEN; piece++){
+            uint64_t src_bb = board.bitboards[color] & board.bitboards[piece];
+            
+            //Absolutely pinned pieces can not move at all
+            src_bb &= ~pinned;
+
+            while(src_bb){
+                int src_bsf = bitScanForward(src_bb);//Index of leftmost piece
+                src_bb &= ~SHIFT(src_bsf);
+
+                uint64_t dest_bb = get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color];
+                dest_bb &= check_restriction_mask;
+
+                append_moves(src_bsf, dest_bb, move_arr);
+            }
+        }  
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color], move_arr);
+    } 
+
+    return m_i;
+}
+
+int is_in_check(int color){
+    uint64_t king = board.bitboards[color] & board.bitboards[KING];
+    return (king & get_attacking_bitboard(1-color))!=0;
+}
+
 uint64_t gen_knight(int src, int color){
-    return knightDest[src] & ~board.bitboards[color];
+    return knightDest[src];
 }
 
 uint64_t gen_king(int src, int color){
-    return kingDest[src] & ~board.bitboards[color];
+    uint64_t attacking = get_attacking_bitboard(1-color);
+    uint64_t occ =  (board.bitboards[color] & ~board.bitboards[KING]) | board.bitboards[1-color];
+    uint64_t rv = kingDest[src] & ~attacking;
+
+    if(color==WHITE){
+        if( (MD.castle_flags & 8) && !((attacking | occ) & WHITE_KS_CASTLE_MASK) ){
+            rv |= 0x4000000000000000;
+        }
+        if( (MD.castle_flags & 4) && !((attacking | occ) & WHITE_QS_CASTLE_MASK) ){
+            rv |= 0x0400000000000000;
+        }
+    } else {
+        if( (MD.castle_flags & 2) && !((attacking | occ) & BLACK_KS_CASTLE_MASK) ){
+            rv |= 0x40;
+        }
+        if( (MD.castle_flags & 1) && !((attacking | occ) & BLACK_QS_CASTLE_MASK) ){
+            rv |= 0x4;
+        }
+    }
+    return rv;
 }
 
 uint64_t gen_rook(int src, int color){
     uint64_t int_bb = rookDestTrunc[src] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
     int index = (int_bb * rookMN[src]) >> (64-rookMN_w[src]);
-    return rookDestInt[src][index] & ~board.bitboards[color];
+    return rookDestInt[src][index];
 }
 
 uint64_t gen_bishop(int src, int color){
     uint64_t int_bb = bishopDestTrunc[src] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
     int index = (int_bb * bishopMN[src]) >> (64-bishopMN_w[src]);
-    return bishopDestInt[src][index] & ~board.bitboards[color];
+    return bishopDestInt[src][index];
 }
 
 uint64_t gen_queen(int src, int color){
@@ -72,8 +177,6 @@ uint64_t gen_queen(int src, int color){
     int_bb = bishopDestTrunc[src] & (board.bitboards[WHITE] | board.bitboards[BLACK]);//Intersection of attacking cross wtih other pieces
     index = (int_bb * bishopMN[src]) >> (64-bishopMN_w[src]);
     dest_bb |= bishopDestInt[src][index];
-
-    dest_bb &= ~board.bitboards[color];
 
     return dest_bb;
 }
@@ -88,7 +191,29 @@ void append_moves(int src, uint64_t dest_bb, move* move_arr){
     }
 }
 
-void gen_pawn_white(uint64_t bb, move* move_arr){
+uint64_t gen_pawn(int src, int color){
+    return gen_pawn_ptr[color](SHIFT(src));
+}
+
+uint64_t gen_pawn_white(uint64_t pawn_pos){
+    uint64_t rv = 0;
+    rv |= (pawn_pos >> 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Single push
+    rv |= ( (rv&RANKS[2]) >> 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Double push
+    rv |= ((pawn_pos >> 7) | (pawn_pos >> 9)) & (board.bitboards[BLACK] | SHIFT(MD.ep_right));//Attacks
+    return rv;
+}
+
+uint64_t gen_pawn_black(uint64_t pawn_pos){
+    uint64_t rv = 0;
+    rv |= (pawn_pos << 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Single push
+    rv |= ( (rv&RANKS[5]) << 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Double push
+    rv |= ((pawn_pos << 7) | (pawn_pos << 9)) & (board.bitboards[WHITE] | SHIFT(MD.ep_right));//Attacks
+    return rv;
+}
+
+
+/*
+void gen_pawn_white(uint64_t bb, move* move_arr, uint64_t check_restrication_mask, uint64_t pinned){
     uint64_t TDB;//Temporary destination bitboard
     uint64_t TPB;//Temporary promotion bitboard
     uint64_t DPP;//Double pawn push temporary bitboard
@@ -96,6 +221,7 @@ void gen_pawn_white(uint64_t bb, move* move_arr){
 
     //Left attacks
     TDB = (bb >> 9) & NOT_H_FILE & board.bitboards[BLACK];
+    TDB &= check_restrication_mask;
     TPB = TDB & ~NOT_8_RANK;
     TDB &= NOT_8_RANK;
     while (TDB){
@@ -124,6 +250,7 @@ void gen_pawn_white(uint64_t bb, move* move_arr){
 
     //RIGHT ATTACKS
     TDB = (bb >> 7) & NOT_A_FILE & board.bitboards[BLACK];
+    TDB &= check_restrication_mask;
     TPB = TDB & ~NOT_8_RANK;
     TDB &= NOT_8_RANK;
     while (TDB){
@@ -152,9 +279,11 @@ void gen_pawn_white(uint64_t bb, move* move_arr){
 
     //PUSHES
     TDB = (bb >> 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
+    DPP = ((TDB & RANK_3)>>8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
+    TDB &= check_restrication_mask;
+    DPP &= check_restrication_mask;
     TPB = TDB & ~NOT_8_RANK;//Promotions
     TDB &= NOT_8_RANK;//Remove promotions from normal pushes
-    DPP = ((TDB & RANK_3)>>8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
     while (TDB){
         //Find least significant positive bit and remove it
         bsf = bitScanForward(TDB);
@@ -190,7 +319,7 @@ void gen_pawn_white(uint64_t bb, move* move_arr){
     }
 }
 
-void gen_pawn_black(uint64_t bb, move* move_arr){
+void gen_pawn_black(uint64_t bb, move* move_arr, uint64_t check_restrication_mask, uint64_t pinned){
     uint64_t TDB;//Temporary destination bitboard
     uint64_t TPB;//Temporary promotion bitboard
     uint64_t DPP;//Double pawn push bitboard
@@ -198,6 +327,8 @@ void gen_pawn_black(uint64_t bb, move* move_arr){
 
     //LEFT ATTACKS (white perspective)
     TDB = (bb << 7) & NOT_H_FILE & board.bitboards[WHITE];
+    TDB &= check_restrication_mask;
+    DPP &= check_restrication_mask;
     TPB = TDB & ~NOT_1_RANK;
     TDB &= NOT_1_RANK;
     while (TDB){
@@ -224,6 +355,7 @@ void gen_pawn_black(uint64_t bb, move* move_arr){
 
     //RIGHT ATTACKS (white perspective)
     TDB = (bb << 9) & NOT_A_FILE & board.bitboards[WHITE];
+    TDB &= check_restrication_mask;
     TPB = TDB & ~NOT_1_RANK;
     TDB &= NOT_1_RANK;
     while (TDB){
@@ -250,9 +382,10 @@ void gen_pawn_black(uint64_t bb, move* move_arr){
 
     //PUSHES
     TDB = (bb << 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
+    DPP = ((TDB & RANK_6)<<8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
+    TDB &= check_restrication_mask;
     TPB = TDB & ~NOT_1_RANK;
     TDB &= NOT_1_RANK;
-    DPP = ((TDB & RANK_6)<<8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);
     while (TDB){
         //Find least significant positive bit and remove it
         bsf = bitScanForward(TDB);
@@ -286,22 +419,119 @@ void gen_pawn_black(uint64_t bb, move* move_arr){
     }
 }
 
-void gen_ep_white(move* move_arr){
-    if(MD.ep_right && MD.ep_right > 23) return;
+void gen_ep_white(move* move_arr, uint64_t check_restriction_mask){
+    if(!MD.ep_right || MD.ep_right > 23) return;
     uint64_t src_bb = ( SHIFT(MD.ep_right+9) | SHIFT(MD.ep_right+7) ) & board.bitboards[WHITE] & board.bitboards[PAWN];
     while(src_bb){
         int src_bsf = bitScanForward(src_bb);
         src_bb &= ~SHIFT(src_bsf);
-        move_arr[m_i++] = (move){src_bsf,MD.ep_right, 0};
+        if(SHIFT(MD.ep_right) & check_restriction_mask) move_arr[m_i++] = (move){src_bsf,MD.ep_right, 0};
     }
 }
 
-void gen_ep_black(move* move_arr){
-    if(MD.ep_right && MD.ep_right < 40) return;
+void gen_ep_black(move* move_arr, uint64_t check_restriction_mask){
+    if(!MD.ep_right || MD.ep_right < 40) return;
     uint64_t src_bb = ( SHIFT(MD.ep_right-9) | SHIFT(MD.ep_right-7) ) & board.bitboards[BLACK] & board.bitboards[PAWN];
     while(src_bb){
         int src_bsf = bitScanForward(src_bb);
         src_bb &= ~SHIFT(src_bsf);
-        move_arr[m_i++] = (move){src_bsf,MD.ep_right, 0};
+        if(SHIFT(MD.ep_right) & check_restriction_mask) move_arr[m_i++] = (move){src_bsf,MD.ep_right, 0};
     }
+}
+*/
+
+
+//Used for king move generation (returns the attacks of the passed color)
+uint64_t get_attacking_bitboard(int color){
+    uint64_t rv = 0;
+    uint64_t pawns = board.bitboards[color] & board.bitboards[PAWN];
+    if(color==WHITE){
+        rv |= (pawns >> 9) & NOT_H_FILE;
+        rv |= (pawns >> 7) & NOT_A_FILE;
+    } else {
+        rv |= (pawns << 9) & NOT_A_FILE;
+        rv |= (pawns << 7) & NOT_H_FILE;
+    }
+
+    uint64_t knights = board.bitboards[color] & board.bitboards[KNIGHT];
+    while(knights){
+        int src = bitScanForward(knights);
+        knights &= ~SHIFT(src);
+        rv |= knightDest[src];
+    }
+
+    rv |= kingDest[bitScanForward(board.bitboards[color] & board.bitboards[KING])];
+
+    uint64_t rooks = board.bitboards[color] & board.bitboards[ROOK];
+    while(rooks){
+        int src = bitScanForward(rooks);
+        rooks &= ~SHIFT(src);
+        rv |= gen_rook(src, color);
+    }
+    uint64_t bishops = board.bitboards[color] & board.bitboards[BISHOP];
+    while(bishops){
+        int src = bitScanForward(bishops);
+        bishops &= ~SHIFT(src);
+        rv |= gen_bishop(src, color);
+    }
+    uint64_t queens = board.bitboards[color] & board.bitboards[QUEEN];
+    while(queens){
+        int src = bitScanForward(queens);
+        queens &= ~SHIFT(src);
+        rv |= gen_queen(src, color);
+    }
+
+    return rv;
+}
+
+uint64_t get_pinned(int king_pos, int color){
+    uint64_t pinned = 0 ;
+
+    uint64_t enemy_sliders = gen_xray_rook(board.bitboards[WHITE] | board.bitboards[BLACK], board.bitboards[color], king_pos) & (board.bitboards[1-color] & (board.bitboards[QUEEN] | board.bitboards[ROOK]));
+    while(enemy_sliders){
+        int src = bitScanForward(enemy_sliders);
+        enemy_sliders &= ~SHIFT(src);
+
+        uint64_t int_bb = rookDestTrunc[src] & ((board.bitboards[WHITE] | board.bitboards[BLACK]));
+        int index = (int_bb * rookMN[src]) >> (64-rookMN_w[src]);
+        pinned |= inBetween[src][king_pos] & board.bitboards[color];
+    }
+
+    enemy_sliders = gen_xray_bishop(board.bitboards[WHITE] | board.bitboards[BLACK], board.bitboards[color], king_pos) & (board.bitboards[1-color] & (board.bitboards[QUEEN] | board.bitboards[BISHOP]));
+    while(enemy_sliders){
+        int src = bitScanForward(enemy_sliders);
+        enemy_sliders &= ~SHIFT(src);
+
+        uint64_t int_bb = bishopDestTrunc[src] & ((board.bitboards[WHITE] | board.bitboards[BLACK]));
+        int index = (int_bb * bishopMN[src]) >> (64-bishopMN_w[src]);
+        pinned |= inBetween[src][king_pos] & board.bitboards[color];
+    }
+    return pinned;
+}
+
+uint64_t gen_xray_rook(uint64_t pieces, uint64_t blockers, int src){
+    uint64_t int_bb = rookDestTrunc[src] & (pieces);//Intersection of attacking cross wtih other pieces
+    int index = (int_bb * rookMN[src]) >> (64-rookMN_w[src]);
+
+    uint64_t dest_bb = rookDestInt[src][index];
+    blockers &= dest_bb;
+
+    int_bb = rookDestTrunc[src] & (pieces ^ blockers);//Intersection of attacking cross wtih other pieces
+    index = (int_bb * rookMN[src]) >> (64-rookMN_w[src]);
+
+    return dest_bb ^ rookDestInt[src][index];
+
+}
+
+uint64_t gen_xray_bishop(uint64_t pieces, uint64_t blockers, int src){
+    uint64_t int_bb = bishopDestTrunc[src] & (pieces);//Intersection of attacking cross wtih other pieces
+    int index = (int_bb * bishopMN[src]) >> (64-bishopMN_w[src]);
+
+    uint64_t dest_bb = bishopDestInt[src][index];
+    blockers &= dest_bb;
+
+    int_bb = bishopDestTrunc[src] & (pieces ^ blockers);//Intersection of attacking cross wtih other pieces
+    index = (int_bb * bishopMN[src]) >> (64-bishopMN_w[src]);
+
+    return dest_bb ^ bishopDestInt[src][index];
 }

@@ -11,12 +11,14 @@
 #define BGCOLOR 0x222222
 #define LIGHTSPACECOLOR 0xEEEEEE
 #define DARKSPACECOLOR 0x4444444
+#define LIGHTATTACKING 0xEE5555
+#define DARKATTACKING 0xAA2222
 #define PS 90
 #define XMARG ((SWIDTH - PS*8)/2)
 #define YMARG ((SHEIGHT - PS*8)/2)
 
 //Engine/game settings
-#define AICOLOR 1
+int AICOLOR;
 #define MAXDEPTH 6
 
 //Misc. utility
@@ -27,8 +29,21 @@
 #define NOT_8_RANK 0xFFFFFFFFFFFFFF00
 #define RANK_3 0x0000FF0000000000
 #define RANK_6 0x0000000000FF0000
+#define FULL_BOARD 0xFFFFFFFFFFFFFFF
+#define WHITE_KS_CASTLE_MASK 0x7000000000000000
+#define WHITE_QS_CASTLE_MASK 0x1A00000000000000
+#define BLACK_KS_CASTLE_MASK 0x0000000000000070
+#define BLACK_QS_CASTLE_MASK 0x000000000000001A
 
 double PIECE_VALUES[5];
+
+//Bitboards for ranks, files, and diagonals
+extern uint64_t RANKS[8];
+extern uint64_t FILES[8];
+extern uint64_t DIAGONALS_NE[15];
+extern uint64_t DIAGONALS_NW[15];
+extern int diagLU_NE[64];
+extern int diagLU_NW[64];
 
 //Bitboards of possible destinations (assuming empty board) for each source square
 extern uint64_t knightDest[64];
@@ -43,6 +58,9 @@ extern uint64_t bishopMN[64];
 //Compression width of corresponding magic numbers
 extern int rookMN_w[64];
 extern int bishopMN_w[64];
+
+//InBetweenLookup (bitboard of squares between two given squares, exclusive)
+uint64_t inBetween[64][64];
 
 //Sliding piece destination BB for each source square and piece intersection arrangements allocated & loaded at runtime
 //Indexed by magic number multiplication
@@ -96,10 +114,17 @@ struct board_t{
 } board;
 
 typedef struct{
-    char castle_flags;//Bottom 4 bits - white ks, white qs, black ks, black qs (1 indicates available)
+    char castle_flags;//[3] - white ks, [2] - white qs, [1] - black ks, [0] - black qs (1 indicates available)
     char ep_right;//Location of valid space to perform en passant to, 0 if none
-    char fmr_count;//Fifty move rule count
+    int fmr_count;//Half move rule count
 } metadata_t;//All gamestate info other than board position
+/*
+Tentative approach to draws:
+- Ignore repetitions until a transposition table is implemented, see if it is easy/feasible then
+- No way to offer a draw/resign
+- Implement stalemate and FMR.
+*/
+
 
 typedef struct{
     char src;

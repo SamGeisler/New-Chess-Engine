@@ -5,12 +5,15 @@ COMPILER_FLAGS =
 
 all:
 	gcc $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
-
 debug:
 	gcc $(INCLUDE) $(LIBRARY) -g -o main main.c render.c control.c generate_moves.c bb_utils.c -lmingw32 -lSDL2main -lSDL2
 
+perft:
+	gcc -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
+perftDB:
+	gcc -g -o perft perft.c generate_moves.c control.c bb_utils.c -lmingw32
+
 test:
 	g++ -g -O0 -fno-inline -std=c++17 -o test testbox.cpp -lmingw32
-
 testNDB:
 	g++  -o test testbox.cpp -lmingw32
