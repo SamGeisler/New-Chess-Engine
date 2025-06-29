@@ -117,6 +117,7 @@ typedef struct {
 typedef struct{
     char castle_flags;//[3] - white ks, [2] - white qs, [1] - black ks, [0] - black qs (1 indicates available)
     char ep_right;//Location of valid space to perform en passant to, 0 if none
+    char to_move;
     int fmr_count;//Half move rule count
 } metadata_t;//All gamestate info other than board position
 

@@ -1,5 +1,5 @@
 #include "global.h"
-#include "precompute.h"
+#include "load_precompute.h"
 
 uint64_t inBetween[64][64];
 uint64_t* rookDestInt[64];

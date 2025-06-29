@@ -15,7 +15,7 @@ Tentative approach to draws:
 */
 #include "SDL.h"
 #include "global.h"
-#include "precompute.h"
+#include "load_precompute.h"
 #include "render.h"
 #include "control.h"
 #include "generate_moves.h"

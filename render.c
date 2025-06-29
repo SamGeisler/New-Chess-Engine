@@ -34,7 +34,7 @@ void draw_background(uint64_t bb){
             SDL_FillRect(current_surface, &square, color);
         }
     }
-    //SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
+    SDL_BlitScaled(number_surface, NULL, current_surface, NULL);
 
 }
 

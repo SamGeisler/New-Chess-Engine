@@ -14,7 +14,7 @@ void run_test_suite(){
     int test_succesful = 1;
     FILE* fh = fopen("perftsuite.txt","r");
     if(fh==NULL){
-        printf("Could not open file.\n");
+        printf("Could not open perftsuite.txt.\n");
         return;
     }
 

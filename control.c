@@ -11,24 +11,39 @@ void execute_move(move m){
     int piece = board_arr[m.src]%8;
     int captured = board_arr[m.dest]%8;
 
+    //Update player to move
+    MD.to_move = 1-MD.to_move;
+
+    //Update fifty-move-rule count
     if(piece==PAWN || board_arr[m.dest]){
         MD.fmr_count = 0;
     } else {
         MD.fmr_count++;
     }
 
-    board_arr[m.dest] = board_arr[m.src];
-    board_arr[m.src] = EMPTY;
-
-    //Remove moving piece from source
+    //Bitboards: Remove moving piece from source
     board.bitboards[color] &= ~SHIFT(m.src);
     board.bitboards[piece] &= ~SHIFT(m.src);
 
-    //Remove captured piece from destination
+    //Bitboards: Remove captured piece from destination
     board.bitboards[1-color] &= ~SHIFT(m.dest);
     if(captured) board.bitboards[captured] &= ~SHIFT(m.dest);
 
-    //Add moving piece to destination
+    //Check for promotion
+    if(m.promo){
+        switch(m.promo){
+            case 1: piece = KNIGHT; break;
+            case 2: piece = BISHOP; break;
+            case 3: piece = ROOK; break;
+            case 4: piece = QUEEN; break;
+        }
+    }
+
+    //Update board array
+    board_arr[m.dest] = piece + 8*color;
+    board_arr[m.src] = EMPTY;
+
+    //Bitboards: Add moving piece to destination
     board.bitboards[color] |= SHIFT(m.dest);
     board.bitboards[piece] |= SHIFT(m.dest);
     
@@ -87,6 +102,79 @@ void execute_move(move m){
     if(m.src==63 || m.dest==63) MD.castle_flags &= ~8;
 }
 
+//Reverts from execute_move - does not fix metadata
+//int dest_square - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
+void unexecute_move(move m, int dest_square, int was_ep){
+    int color = board_arr[m.dest]>8;
+    int piece = board_arr[m.dest]%8;
+
+    //Bitboards: Remove piece from destination square
+    board.bitboards[color] &= ~SHIFT(m.dest);
+    board.bitboards[piece] &= ~SHIFT(m.dest);
+
+    //Bitboards: Return captured piece (if any) to destination square
+    if(dest_square){
+        board.bitboards[1-color] |= SHIFT(m.dest);
+        board.bitboards[dest_square] |= SHIFT(m.dest);
+    }
+    
+    if(m.promo){
+        piece = PAWN;
+    }
+
+    //Bitboards: Return piece to starting square
+    board.bitboards[color] |= SHIFT(m.src);
+    board.bitboards[piece] |= SHIFT(m.src);
+
+    //Board array: Fix
+    board_arr[m.src] = piece + 8*color;
+    board_arr[m.dest] = dest_square + 8*(1-color);
+
+    //Undo en-passant capture
+    if(was_ep){ 
+        int repair_square = m.dest + (16*color-8);
+        board_arr[repair_square] = PAWN + 8*(1-color);
+
+        board.bitboards[1-color] |= SHIFT(repair_square);
+        board.bitboards[PAWN] |= SHIFT(repair_square);
+    }
+
+    //Undo rook move for castling
+    if(piece == KING){
+        if(m.src == 60 && m.dest == 62){
+            board_arr[63] = WHITE_ROOK;
+            board_arr[61] = EMPTY;
+            board.bitboards[ROOK] |= SHIFT(63);
+            board.bitboards[WHITE] |= SHIFT(63);
+            board.bitboards[ROOK] ^= SHIFT(61);
+            board.bitboards[WHITE] ^= SHIFT(61);
+        } else if(m.src == 60 && m.dest == 58){
+            board_arr[56] = WHITE_ROOK;
+            board_arr[59] = EMPTY;
+            board.bitboards[ROOK] |= SHIFT(56);
+            board.bitboards[WHITE] |= SHIFT(56);
+            board.bitboards[ROOK] ^= SHIFT(59);
+            board.bitboards[WHITE] ^= SHIFT(59);
+        } else if(m.src == 4 && m.dest == 6){
+            board_arr[7] = BLACK_ROOK;
+            board_arr[5] = EMPTY;
+            board.bitboards[ROOK] |= SHIFT(7);
+            board.bitboards[BLACK] |= SHIFT(7);
+            board.bitboards[ROOK] ^= SHIFT(5);
+            board.bitboards[BLACK] ^= SHIFT(5);
+        } else if(m.src == 4 && m.dest == 2){
+            board_arr[0] = BLACK_ROOK;
+            board_arr[3] = EMPTY;
+            board.bitboards[ROOK] |= SHIFT(0);
+            board.bitboards[BLACK] |= SHIFT(0);
+            board.bitboards[ROOK] ^= SHIFT(3);
+            board.bitboards[BLACK] ^= SHIFT(3);
+        }
+    }
+}
+
+
+
 move handle_player_input(uint64_t render_bb){
     move* moves = (move*)malloc(220*sizeof(move));
     int num_moves = generate_moves(moves, 1-AICOLOR);
@@ -121,6 +209,16 @@ move handle_player_input(uint64_t render_bb){
                         if(moves[i].src == try_src && moves[i].dest == try_dest){
                             move_found.src = holding;
                             move_found.dest = ((mx-XMARG) / PS) + 8* ( (my-YMARG) / PS);
+
+                            if((move_found.dest < 8 || move_found.dest >=56) && (board_arr[move_found.src] == WHITE_PAWN || board_arr[move_found.src] == BLACK_PAWN)){
+                                int promo_inp;
+                                printf("Enter piece to promote to, 1-Knight, 2-Bishop, 3-Rook, 4-Queen:");
+                                while(!scanf("%d",&promo_inp) || promo_inp > 4 || promo_inp < 1){
+                                    printf("Invalid input\n");
+                                }
+                                move_found.promo = promo_inp;
+                            }
+
                             break;
                         }
                         if(i==num_moves-1) printf("Invalid move! - %d -> %d\n",try_src, try_dest);
