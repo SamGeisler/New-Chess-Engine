@@ -8,4 +8,5 @@ int bitScanForward(uint64_t bb);
 
 void print_bb(uint64_t bb);
 
+int count_bits(uint64_t bb);
 #endif

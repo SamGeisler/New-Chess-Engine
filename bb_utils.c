@@ -18,9 +18,18 @@ int bitScanForward(uint64_t bb) {
 }
 
 void print_bb(uint64_t bb){
-    printf("Bitboard: %X\n",bb);
+    printf("Bitboard: 0x%llX\n",bb);
     for(int i = 0; i<64; i++){
         printf("%c ", (SHIFT(i) & bb) ? 'X' : '.');
         if(i%8==7) printf("\n");
     }
+}
+
+int count_bits(uint64_t bb){
+    int rv = 0;
+    while(bb){
+        bb &= ~SHIFT(bitScanForward(bb));
+        rv++;
+    }
+    return rv;
 }
