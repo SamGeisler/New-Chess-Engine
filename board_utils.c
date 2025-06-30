@@ -178,6 +178,7 @@ void print_board_arr(){
             case BLACK_ROOK: c='r'; break;
             case BLACK_QUEEN: c='q'; break;
             case BLACK_KING: c='k'; break;
+            default: c='?'; break;
         }
 
         printf("%c ",c);

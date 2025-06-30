@@ -29,7 +29,7 @@ void perft_debug(char* fen, int depth);
 
 int main(int argc, char *argv[]){
     load_precompute();
-    perft_debug("4k3/8/8/8/8/8/8/4K2R w K - 0 1",2);
+    perft_debug("r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1", 2);
 
     //run_test_suite();
 
@@ -40,6 +40,7 @@ void perft_debug(char* fen, int depth){
     init_board(fen);
     move* moves = malloc(220*sizeof(move));
     int num_moves = generate_moves(moves, MD.to_move);
+    printf("%d moves:\n",num_moves);
     int total = 0;
     metadata_t backup_md;
     for(int i = 0; i<num_moves; i++){

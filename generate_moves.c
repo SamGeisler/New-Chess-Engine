@@ -19,19 +19,17 @@ uint64_t gen_king(int src, int color);
 
 uint64_t (*get_piece_dest_bb[6]) (int, int) = {&gen_pawn, &gen_knight, &gen_bishop, &gen_rook, &gen_queen, &gen_king};
 
-void append_moves(int src, uint64_t dest_bb, move* move_arr);
+void append_moves(int src, uint64_t dest_bb, move** move_arr_head);
 
 uint64_t gen_xray_rook(uint64_t pieces, uint64_t blockers, int src);
 uint64_t gen_xray_bishop(uint64_t pieces, uint64_t blockers, int src);
-
-//Move array index
-int m_i;
 
 int generate_moves(move* move_arr, int color){
     if(is_in_check(color)){
         return generate_moves_check(move_arr,color);
     }
-    m_i = 0;
+
+    move* move_arr_head = move_arr;
 
     int king_pos = bitScanForward(board.bitboards[KING] & board.bitboards[color]);
     uint64_t pinned = get_pinned(king_pos, color);
@@ -47,7 +45,7 @@ int generate_moves(move* move_arr, int color){
             int src_bsf = bitScanForward(src_bb);//Index of leftmost piece
             src_bb &= ~SHIFT(src_bsf);
 
-            append_moves(src_bsf, get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color], move_arr);
+            append_moves(src_bsf, get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color], &move_arr_head);
         }
 
         while(pinned_to_move){
@@ -66,16 +64,16 @@ int generate_moves(move* move_arr, int color){
                 dest_bb &= DIAGONALS_NW[diagLU_NW[src_bsf]];
             }
 
-            append_moves(src_bsf, dest_bb, move_arr);
+            append_moves(src_bsf, dest_bb, &move_arr_head);
 
         }
     }
 
-    return m_i;
+    return move_arr_head - move_arr;
 }
 
 int generate_moves_check(move* move_arr, int color){
-    m_i = 0;
+    move* move_arr_head = move_arr;
 
     uint64_t king_bb = board.bitboards[color] & board.bitboards[KING];
     int king_pos = bitScanForward(king_bb);
@@ -113,7 +111,7 @@ int generate_moves_check(move* move_arr, int color){
 
 
     if(numSliding && numPK || numSliding > 2 || numPK >2){
-        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, move_arr);
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, &move_arr_head);
     } else {
         //Bitboard of legal destination squares: If single sliding attacker, inbetween or capture. If single other attacker, only capture
         uint64_t check_restriction_mask = numPK ? pawn_knight_attackers : inBetween[king_pos][bitScanForward(sliding_attackers)] | sliding_attackers;
@@ -131,13 +129,13 @@ int generate_moves_check(move* move_arr, int color){
                 uint64_t dest_bb = get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color];
                 dest_bb &= check_restriction_mask;
 
-                append_moves(src_bsf, dest_bb, move_arr);
+                append_moves(src_bsf, dest_bb, &move_arr_head);
             }
         }  
-        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, move_arr);
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, &move_arr_head);
     } 
 
-    return m_i;
+    return move_arr_head-move_arr;
 }
 
 int is_in_check(int color){
@@ -196,13 +194,13 @@ uint64_t gen_queen(int src, int color){
     return dest_bb;
 }
 
-void append_moves(int src, uint64_t dest_bb, move* move_arr){
+void append_moves(int src, uint64_t dest_bb, move** move_arr_head){
     int dest_bsf;
     while(dest_bb){
         int dest_bsf = bitScanForward(dest_bb);
         dest_bb &= ~SHIFT(dest_bsf);
 
-        move_arr[m_i++] = (move){src, dest_bsf, 0};
+        *((*move_arr_head)++) = (move){src, dest_bsf, 0};
     }
 }
 

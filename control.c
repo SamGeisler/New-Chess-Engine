@@ -125,7 +125,7 @@ void unexecute_move(move m, int dest_square, int was_ep){
 
     //Board array: Fix
     board_arr[m.src] = piece + 8*color;
-    board_arr[m.dest] = dest_square + 8*(1-color);
+    board_arr[m.dest] = dest_square;
 
     //Undo en-passant capture
     if(was_ep){ 

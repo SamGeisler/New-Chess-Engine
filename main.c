@@ -37,7 +37,7 @@ void print_board_arr();
 int main(int argc, char* argv[]){
     load_precompute();
     //Starting board: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    init_board("4k3/8/8/8/8/8/8/4K2R w K - 0 1 ;D1 15 ;D2 66 ;D3 1197 ;D4 7059 ;D5 133987 ;D6 764643");
+    init_board("r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1 ");
 
     render_init();
     render_board(-1,0);
@@ -46,26 +46,13 @@ int main(int argc, char* argv[]){
 
     while(1){
         print_metadata();
-
-        int num_moves = generate_moves(moves,WHITE);
-        printf("\n%d WHITE MOVES:\n", num_moves);
+        int num_moves = generate_moves(moves,MD.to_move);
+        printf("\n%d MOVES:\n", num_moves);
         for(int i = 0; i<num_moves; i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
         }
-        AICOLOR = BLACK;
-        move pmove = handle_player_input(get_pinned(bitScanForward(board.bitboards[WHITE] & board.bitboards[KING]), WHITE));
-        execute_move(pmove);
-
-        print_metadata();
-        num_moves = generate_moves(moves,BLACK);
-        printf("\n%d BLACK MOVES:\n", num_moves);
-        for(int i = 0; i<num_moves; i++){
-            printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
-        }
-        //print_bb(board.bitboards[KING]);
-        //print_bb(board.bitboards[PAWN]);
-        AICOLOR = WHITE;
-        pmove = handle_player_input(get_pinned(bitScanForward(board.bitboards[BLACK] & board.bitboards[KING]), BLACK));
+        AICOLOR = 1-MD.to_move;
+        move pmove = handle_player_input(0);
         execute_move(pmove);
     
     } 
