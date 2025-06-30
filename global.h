@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "bb_utils.h"
+#include "board_utils.h"
 
 //Display
 #define SWIDTH 1200
@@ -51,6 +51,8 @@ extern int diagLU_NW[64];
 //Bitboards of possible destinations (assuming empty board) for each source square
 extern uint64_t knightDest[64];
 extern uint64_t kingDest[64];
+extern uint64_t rookDest[64];
+extern uint64_t bishopDest[64];
 extern uint64_t rookDestTrunc[64];//Excludes last dest squares in row/col
 extern uint64_t bishopDestTrunc[64];//Excludes last dest squares in diagonal
 

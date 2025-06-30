@@ -84,7 +84,24 @@ int generate_moves_check(move* move_arr, int color){
     uint64_t pinned = get_pinned(king_pos, color);
 
     uint64_t sliding_attackers = gen_rook(king_pos, color) & (board.bitboards[ROOK] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+    
+    uint64_t slide_through_dest; //Full trajectory of sliding pieces, to ensure king leaves rank/file/diagonal
+    uint64_t temp = sliding_attackers;
+    while(temp){
+        int src = bitScanForward(temp);
+        temp ^= SHIFT(src);
+        slide_through_dest |= rookDest[src];
+    }
+
     sliding_attackers |= gen_bishop(king_pos, color) & (board.bitboards[BISHOP] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+
+    temp = sliding_attackers;
+    while(temp){
+        int src = bitScanForward(temp);
+        temp ^= SHIFT(src);
+        slide_through_dest |= bishopDest[src];
+    }
+
     int numSliding = count_bits(sliding_attackers);
 
     uint64_t pawn_knight_attackers = gen_knight(king_pos, color) & board.bitboards[1-color] & board.bitboards[KNIGHT];
@@ -97,7 +114,7 @@ int generate_moves_check(move* move_arr, int color){
 
 
     if(numSliding && numPK || numSliding > 2 || numPK >2){
-        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color], move_arr);
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, move_arr);
     } else {
         //Bitboard of legal destination squares: If single sliding attacker, inbetween or capture. If single other attacker, only capture
         uint64_t check_restriction_mask = numPK ? pawn_knight_attackers : inBetween[king_pos][bitScanForward(sliding_attackers)] | sliding_attackers;
@@ -105,7 +122,7 @@ int generate_moves_check(move* move_arr, int color){
         for(int piece = PAWN; piece<=QUEEN; piece++){
             uint64_t src_bb = board.bitboards[color] & board.bitboards[piece];
             
-            //Absolutely pinned pieces can not move at all
+            //Absolutely pinned pieces cannot move at all
             src_bb &= ~pinned;
 
             while(src_bb){
@@ -118,7 +135,7 @@ int generate_moves_check(move* move_arr, int color){
                 append_moves(src_bsf, dest_bb, move_arr);
             }
         }  
-        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color], move_arr);
+        append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, move_arr);
     } 
 
     return m_i;

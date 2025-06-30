@@ -28,6 +28,7 @@ void loadIntersections();
 void calculateDestBB();//From intersections
 void genIB();
 void genLineInfo();
+void genSlideDest();
 
 using namespace std;
 static uint16_t randResetSeedCounter = 0;
@@ -58,7 +59,30 @@ uint64_t rand64(){
 }
 
 int main() {
+    genSlideDest();
     return 0;
+}
+
+void genSlideDest(){
+    printf("Rook full dest bbs:\n");
+    for(int src = 0; src<64; src++){
+        uint64_t dest_bb = 0;
+        for(int i = src+8; i<64; i+=8) dest_bb |= SHIFT(i);
+        for(int i = src-8; i>=0; i-=8) dest_bb |= SHIFT(i);
+        for(int i = src+1; i%8>0; i++) dest_bb |= SHIFT(i);
+        for(int i = src-1; i%8<7 && i>=0; i--) dest_bb |= SHIFT(i);
+        printf("0x%llX, ",dest_bb);
+    }
+
+    printf("Bishop full dest bbs:\n");
+    for(int src = 0; src < 64; src++){
+        uint64_t dest_bb = 0;
+        for(int i = src+7; i<64 && i%8>=0 && i%8<7; i+=7) dest_bb |= SHIFT(i);
+        for(int i = src+9; i<64 && i%8<=7 && i%8>0; i+=9) dest_bb |= SHIFT(i);
+        for(int i = src-7; i>=0 && i%8<=7 && i%8>0; i-=7) dest_bb |= SHIFT(i);
+        for(int i = src-9; i>=0 && i%8<7 && i%8>=0; i-=9) dest_bb |= SHIFT(i);
+        printf("0x%llX, ",dest_bb);
+    }
 }
 
 void genLineInfo(){

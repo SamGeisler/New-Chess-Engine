@@ -1,3 +1,11 @@
+/*
+TODO:
+Figure out a better move generation debugging workflow/implementation. 
+Maybe something like a perft_debug function that take in a target depth and FEN string
+and gives the same output as stockfish. I also need to verify the notation() method
+in board_utils, and should probably just brush up on C strings in general.
+*/
+
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -5,10 +13,24 @@
 #include <math.h>
 
 #include "global.h"
+#include "load_precompute.h"
 #include "generate_moves.h"
 #include "control.h"
 #include "perft.h"
 
+int AICOLOR;
+double PIECE_VALUES[5] = {1.0, 3.0, 3.0, 5.0, 9.0};
+
+unsigned int board_arr[64];
+board_t board;
+metadata_t MD;
+
+int main(int argc, char *argv[]){
+    load_precompute();
+    run_test_suite();
+
+    return 0;
+}
 
 void run_test_suite(){
     int test_succesful = 1;
@@ -89,15 +111,15 @@ int perft(int depth, int ending_depth, int color){
         return num_moves;
     } else {
         int total = 0;
-        int bup_board[64];
-        metadata_t bup_md;
+        metadata_t backup_md;
         for(int i = 0; i<num_moves; i++){
             
-            metadata_t backup_md = MD;
+            backup_md = MD;
             int dest_square = board_arr[moves[i].dest];
             execute_move(moves[i]);
-            
-            total += perft(depth+1, ending_depth, 1-color);
+
+            int perft_result = perft(depth+1, ending_depth, 1-color);
+            total += perft_result;            
 
             MD = backup_md;
             unexecute_move(moves[i], dest_square, moves[i].dest == MD.ep_right);
