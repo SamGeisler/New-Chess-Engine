@@ -14,7 +14,7 @@ void update_bb();
 void print_board_arr();
 void print_metadata();
 
-char* notation(int pos);
+void notation(int pos, char* out);
 
 
 #endif

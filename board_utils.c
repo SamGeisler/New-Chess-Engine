@@ -193,9 +193,7 @@ void print_metadata(){
     printf("Fifty-move rule count (half moves): %d\n\n",MD.fmr_count);
 }
 
-char* notation(int pos){
-    static char rv[3];
-    rv[0] = 'a' + (63-pos)/8;
-    rv[1] = '0' + pos%8;
-    return rv;
+void notation(int pos, char* out){
+    out[0] = 'a' + pos%8;
+    out[1] = '1' + (63-pos)/8;
 }

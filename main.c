@@ -46,8 +46,10 @@ int main(int argc, char* argv[]){
 
     while(1){
         print_metadata();
-        printf("\nWHITE MOVES:\n");
-        for(int i = 0; i<generate_moves(moves,WHITE); i++){
+
+        int num_moves = generate_moves(moves,WHITE);
+        printf("\n%d WHITE MOVES:\n", num_moves);
+        for(int i = 0; i<num_moves; i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
         }
         AICOLOR = BLACK;
@@ -55,8 +57,9 @@ int main(int argc, char* argv[]){
         execute_move(pmove);
 
         print_metadata();
-        printf("\nBLACK MOVES:\n");
-        for(int i = 0; i<generate_moves(moves,BLACK); i++){
+        num_moves = generate_moves(moves,BLACK);
+        printf("\n%d BLACK MOVES:\n", num_moves);
+        for(int i = 0; i<num_moves; i++){
             printf("%d -> %d, promo %d\n", moves[i].src, moves[i].dest, moves[i].promo);
         }
         //print_bb(board.bitboards[KING]);

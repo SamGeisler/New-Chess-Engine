@@ -25,11 +25,38 @@ unsigned int board_arr[64];
 board_t board;
 metadata_t MD;
 
+void perft_debug(char* fen, int depth);
+
 int main(int argc, char *argv[]){
     load_precompute();
-    run_test_suite();
+    perft_debug("4k3/8/8/8/8/8/8/4K2R w K - 0 1",2);
+
+    //run_test_suite();
 
     return 0;
+}
+
+void perft_debug(char* fen, int depth){
+    init_board(fen);
+    move* moves = malloc(220*sizeof(move));
+    int num_moves = generate_moves(moves, MD.to_move);
+    int total = 0;
+    metadata_t backup_md;
+    for(int i = 0; i<num_moves; i++){
+        backup_md = MD;
+        int dest_square = board_arr[moves[i].dest];
+        execute_move(moves[i]);
+
+        char out1[3] = "  \0"; 
+        char out2[3] = "  \0";
+        notation(moves[i].src, out1);
+        notation(moves[i].dest, out2);
+        
+        printf("%s -> %s: %d moves\n", out1, out2, perft(1,depth-1,MD.to_move));        
+
+        MD = backup_md;
+        unexecute_move(moves[i], dest_square, moves[i].dest == MD.ep_right);
+    }
 }
 
 void run_test_suite(){
