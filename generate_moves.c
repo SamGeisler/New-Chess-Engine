@@ -24,9 +24,8 @@ void append_moves(int src, uint64_t dest_bb, move* move_arr);
 uint64_t gen_xray_rook(uint64_t pieces, uint64_t blockers, int src);
 uint64_t gen_xray_bishop(uint64_t pieces, uint64_t blockers, int src);
 
-
-
-static int m_i;//Move array index
+//Move array index
+int m_i;
 
 int generate_moves(move* move_arr, int color){
     if(is_in_check(color)){
