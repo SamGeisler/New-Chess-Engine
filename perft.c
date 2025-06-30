@@ -93,17 +93,14 @@ int perft(int depth, int ending_depth, int color){
         metadata_t bup_md;
         for(int i = 0; i<num_moves; i++){
             
-            bup_md = MD;
-
+            metadata_t backup_md = MD;
+            int dest_square = board_arr[moves[i].dest];
             execute_move(moves[i]);
-
-
+            
             total += perft(depth+1, ending_depth, 1-color);
 
-            unexecute_move(moves[i]);
-
-
-            MD = bup_md;
+            MD = backup_md;
+            unexecute_move(moves[i], dest_square, moves[i].dest == MD.ep_right);
         }
         free(moves);
         return total;

@@ -9,14 +9,13 @@ void loadDestBB();//Load destination bitboards
 void loadIB();//Load inbetween lookup
 
 int load_precompute(){
+    printf("Loading precomputed data...\n");
     loadDestBB();
     loadIB();
     return 1;
 }
 
 void loadDestBB(){
-    printf("Loading precomputed data...\n");
-
     FILE* dest_fptr = fopen("rookDestReal.txt","r");//Destination bb based on intersections with other pieces
     FILE* int_fptr = fopen("rookIntersections.txt","r");//Possible intersections
 
