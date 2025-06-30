@@ -13,7 +13,7 @@ int dest_square = board_arr[m.dest];
 execute_move(m);
 //process
 MD = backup_md;
-unexecute_move(m, dest_square, m.dest == MD.ep_right);
+unexecute_move(m, dest_square, MD.ep_right && m.dest == MD.ep_right);
 
 */
 

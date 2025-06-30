@@ -112,7 +112,7 @@ void unexecute_move(move m, int dest_square, int was_ep){
     //Bitboards: Return captured piece (if any) to destination square
     if(dest_square){
         board.bitboards[1-color] |= SHIFT(m.dest);
-        board.bitboards[dest_square] |= SHIFT(m.dest);
+        board.bitboards[dest_square%8] |= SHIFT(m.dest);
     }
     
     if(m.promo){

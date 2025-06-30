@@ -20,6 +20,7 @@ uint64_t gen_king(int src, int color);
 uint64_t (*get_piece_dest_bb[6]) (int, int) = {&gen_pawn, &gen_knight, &gen_bishop, &gen_rook, &gen_queen, &gen_king};
 
 void append_moves(int src, uint64_t dest_bb, move** move_arr_head);
+void append_pawn_moves(int src, int color, uint64_t dest_bb, move** move_arr_head);
 
 uint64_t gen_xray_rook(uint64_t pieces, uint64_t blockers, int src);
 uint64_t gen_xray_bishop(uint64_t pieces, uint64_t blockers, int src);
@@ -45,7 +46,9 @@ int generate_moves(move* move_arr, int color){
             int src_bsf = bitScanForward(src_bb);//Index of leftmost piece
             src_bb &= ~SHIFT(src_bsf);
 
-            append_moves(src_bsf, get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color], &move_arr_head);
+            uint64_t dest_bb = get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color];
+            if(piece==PAWN) append_pawn_moves(src_bsf, color, dest_bb, &move_arr_head);
+            else append_moves(src_bsf, dest_bb, &move_arr_head);
         }
 
         while(pinned_to_move){
@@ -64,7 +67,8 @@ int generate_moves(move* move_arr, int color){
                 dest_bb &= DIAGONALS_NW[diagLU_NW[src_bsf]];
             }
 
-            append_moves(src_bsf, dest_bb, &move_arr_head);
+            if(piece==PAWN) append_pawn_moves(src_bsf, color, dest_bb, &move_arr_head);
+            else append_moves(src_bsf, dest_bb, &move_arr_head);
 
         }
     }
@@ -90,9 +94,9 @@ int generate_moves_check(move* move_arr, int color){
         slide_through_dest |= rookDest[src];
     }
 
-    sliding_attackers |= gen_bishop(king_pos, color) & (board.bitboards[BISHOP] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+    temp = gen_bishop(king_pos, color) & (board.bitboards[BISHOP] | board.bitboards[QUEEN]) & board.bitboards[1-color];
+    sliding_attackers |= temp;
 
-    temp = sliding_attackers;
     while(temp){
         int src = bitScanForward(temp);
         temp ^= SHIFT(src);
@@ -129,7 +133,8 @@ int generate_moves_check(move* move_arr, int color){
                 uint64_t dest_bb = get_piece_dest_bb[piece-2](src_bsf, color) & ~board.bitboards[color];
                 dest_bb &= check_restriction_mask;
 
-                append_moves(src_bsf, dest_bb, &move_arr_head);
+                if(piece==PAWN) append_pawn_moves(src_bsf, color,dest_bb, &move_arr_head);
+                else append_moves(src_bsf, dest_bb, &move_arr_head);
             }
         }  
         append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, &move_arr_head);
@@ -204,6 +209,22 @@ void append_moves(int src, uint64_t dest_bb, move** move_arr_head){
     }
 }
 
+void append_pawn_moves(int src, int color, uint64_t dest_bb, move** move_arr_head){
+    int dest_bsf;
+    while(dest_bb){
+        int dest_bsf = bitScanForward(dest_bb);
+        dest_bb &= ~SHIFT(dest_bsf);
+        if(dest_bsf/8 == 7*color){//Moving to final rank  
+            *((*move_arr_head)++) = (move){src, dest_bsf, 1};
+            *((*move_arr_head)++) = (move){src, dest_bsf, 2};
+            *((*move_arr_head)++) = (move){src, dest_bsf, 3};
+            *((*move_arr_head)++) = (move){src, dest_bsf, 4};
+        } else {
+            *((*move_arr_head)++) = (move){src, dest_bsf, 0};
+        }
+    }
+}
+
 uint64_t gen_pawn(int src, int color){
     return gen_pawn_ptr[color](SHIFT(src));
 }
@@ -212,7 +233,8 @@ uint64_t gen_pawn_white(uint64_t pawn_pos){
     uint64_t rv = 0;
     rv |= (pawn_pos >> 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Single push
     rv |= ( (rv&RANKS[2]) >> 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Double push
-    rv |= ((pawn_pos >> 7) | (pawn_pos >> 9)) & (board.bitboards[BLACK] | SHIFT(MD.ep_right));//Attacks
+    rv |= ((pawn_pos >> 7) | (pawn_pos >> 9)) & board.bitboards[BLACK];//Attacks
+    if(MD.ep_right) rv |= ((pawn_pos >> 7) | (pawn_pos >> 9)) & SHIFT(MD.ep_right);//en passant
     return rv;
 }
 
@@ -220,7 +242,8 @@ uint64_t gen_pawn_black(uint64_t pawn_pos){
     uint64_t rv = 0;
     rv |= (pawn_pos << 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Single push
     rv |= ( (rv&RANKS[5]) << 8) & ~(board.bitboards[BLACK] | board.bitboards[WHITE]);//Double push
-    rv |= ((pawn_pos << 7) | (pawn_pos << 9)) & (board.bitboards[WHITE] | SHIFT(MD.ep_right));//Attacks
+    rv |= ((pawn_pos << 7) | (pawn_pos << 9)) & board.bitboards[WHITE];//Attacks
+    if(MD.ep_right) rv |= ((pawn_pos << 7) | (pawn_pos << 9)) & SHIFT(MD.ep_right);//en passant
     return rv;
 }
 

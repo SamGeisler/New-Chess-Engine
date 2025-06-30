@@ -37,7 +37,7 @@ void print_board_arr();
 int main(int argc, char* argv[]){
     load_precompute();
     //Starting board: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    init_board("r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1 ");
+    init_board("1r2k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1");
 
     render_init();
     render_board(-1,0);

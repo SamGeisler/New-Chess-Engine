@@ -29,9 +29,9 @@ void perft_debug(char* fen, int depth);
 
 int main(int argc, char *argv[]){
     load_precompute();
-    perft_debug("r3k2r/8/8/8/8/8/8/1R2K2R b Kkq - 0 1", 2);
+    perft_debug("4k2r/6K1/8/8/8/8/8/8 w k - 0 1", 2);
 
-    //run_test_suite();
+    run_test_suite();
 
     return 0;
 }
@@ -53,10 +53,10 @@ void perft_debug(char* fen, int depth){
         notation(moves[i].src, out1);
         notation(moves[i].dest, out2);
         
-        printf("%s -> %s: %d moves\n", out1, out2, perft(1,depth-1,MD.to_move));        
+        printf("%s -> %s: %d moves\n", out1, out2, perft(1,depth-1));        
 
         MD = backup_md;
-        unexecute_move(moves[i], dest_square, moves[i].dest == MD.ep_right);
+        unexecute_move(moves[i], dest_square, MD.ep_right && moves[i].dest == MD.ep_right);
     }
 }
 
@@ -108,9 +108,9 @@ void run_test_suite(){
         }
 
         init_board(fen);
-        printf("board %d:",i+1);
+        printf("board %3d:",i+1);
         for(int j = 1; j<= 6; j++){
-            int p = perft(1,j,MD.to_move);
+            int p = perft(1,j);
             if(evals[j-1]!=p) test_succesful = 0;
             printf(" %d",evals[j-1]==p);
         }
@@ -127,13 +127,13 @@ void run_test_suite(){
     }
     double elapsed = (double)(clock() - start_clock)/CLOCKS_PER_SEC;
     int min = (int)elapsed / 60;
-    printf("Total time elapsed: %dm %.3f seconds\n",min, elapsed-min);
+    printf("Total time elapsed: %dm %.3f seconds\n",min, elapsed-60.0*min);
 }
 
 
-int perft(int depth, int ending_depth, int color){
+int perft(int depth, int ending_depth){
     move* moves = malloc(220*sizeof(move)); int num_moves;
-    num_moves = generate_moves(moves, color);
+    num_moves = generate_moves(moves, MD.to_move);
     if(depth==ending_depth){
         free(moves);
         return num_moves;
@@ -146,11 +146,11 @@ int perft(int depth, int ending_depth, int color){
             int dest_square = board_arr[moves[i].dest];
             execute_move(moves[i]);
 
-            int perft_result = perft(depth+1, ending_depth, 1-color);
+            int perft_result = perft(depth+1, ending_depth);
             total += perft_result;            
 
             MD = backup_md;
-            unexecute_move(moves[i], dest_square, moves[i].dest == MD.ep_right);
+            unexecute_move(moves[i], dest_square, MD.ep_right && moves[i].dest == MD.ep_right);
         }
         free(moves);
         return total;
