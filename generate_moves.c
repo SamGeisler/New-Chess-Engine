@@ -238,7 +238,10 @@ uint64_t gen_pawn_white(uint64_t pawn_pos){
     rv |= (pawn_pos >> 9) & board.bitboards[BLACK] & NOT_H_FILE;//Left attacks
 
 
-    if(MD.ep_right) rv |= ((pawn_pos >> 7) | (pawn_pos >> 9)) & SHIFT(MD.ep_right);//en passant
+    if(MD.ep_right){
+        rv |= (pawn_pos >> 7) & SHIFT(MD.ep_right) & NOT_A_FILE;//Right en passant
+        rv |= (pawn_pos >> 9) & SHIFT(MD.ep_right) & NOT_H_FILE;//Left en passant
+    }
     return rv;
 }
 
@@ -250,7 +253,10 @@ uint64_t gen_pawn_black(uint64_t pawn_pos){
     rv |= (pawn_pos << 7) & board.bitboards[WHITE] & NOT_H_FILE;//Left attacks (white perspective)
     rv |=  (pawn_pos << 9) & board.bitboards[WHITE] & NOT_A_FILE;//Right attacks
 
-    if(MD.ep_right) rv |= ((pawn_pos << 7) | (pawn_pos << 9)) & SHIFT(MD.ep_right);//en passant
+    if(MD.ep_right){
+        rv |= (pawn_pos << 7) & SHIFT(MD.ep_right) & NOT_H_FILE;//Left en passant
+        rv |= (pawn_pos << 9) & SHIFT(MD.ep_right) & NOT_A_FILE;//Right en passant
+    }
     return rv;
 }
 
