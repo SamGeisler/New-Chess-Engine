@@ -114,7 +114,7 @@ int generate_moves_check(move* move_arr, int color){
     int numPK = count_bits(pawn_knight_attackers);
 
 
-    if(numSliding && numPK || numSliding > 2 || numPK >2){
+    if(numSliding && numPK || numSliding > 1 || numPK >1){
         append_moves(king_pos, gen_king(king_pos, color) & ~board.bitboards[color] & ~slide_through_dest, &move_arr_head);
     } else {
         //Bitboard of legal destination squares: If single sliding attacker, inbetween or capture. If single other attacker, only capture

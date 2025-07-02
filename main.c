@@ -37,8 +37,8 @@ void print_board_arr();
 int main(int argc, char* argv[]){
     load_precompute();
     //Starting board: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    init_board("rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq - 0 1");
-    //a4, h5
+    init_board("8/PRPk4/8/8/8/8/4K1pp/1r6 w - - 0 1");
+    //Test case 120: b8R, f1r, Rb7, rb1, c8B -> double check is not handled correctly
 
     render_init();
     render_board(-1,0);

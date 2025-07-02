@@ -56,7 +56,7 @@ void perft_debug(char* fen, int depth){
         printf("%s -> %s: %d moves\n", out1, out2, perft(1,depth-1));        
 
         MD = backup_md;
-        unexecute_move(moves[i], dest_square, MD.ep_right && moves[i].dest == MD.ep_right);
+        unexecute_move(moves[i], dest_square);
     }
 }
 
@@ -150,7 +150,7 @@ int perft(int depth, int ending_depth){
             total += perft_result;            
 
             MD = backup_md;
-            unexecute_move(moves[i], dest_square, MD.ep_right && moves[i].dest == MD.ep_right);
+            unexecute_move(moves[i], dest_square);
         }
         free(moves);
         return total;

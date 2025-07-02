@@ -112,11 +112,12 @@ void init_board(char* board_init){
         i++;
     }
     i++;
+
     //en passant target square
     if(board_init[i]!='-'){
         MD.ep_right += board_init[i]-'a';
         i++;
-        MD.ep_right += (8-board_init[i])*8;
+        MD.ep_right += (8-(board_init[i]-'0'))*8;
     } else {
         MD.ep_right = 0;
     }

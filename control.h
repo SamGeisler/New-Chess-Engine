@@ -5,7 +5,7 @@ move get_engine_move();
 
 //Update bitboards and board_arr
 void execute_move(move m);//update global game state, assumes valid move.
-void unexecute_move(move m, int dest_square, int was_ep);//Restore board state but not metadata
+void unexecute_move(move m, int dest_square);//Restore board state but not metadata
 /*Move execution/unexcution procedure:
 
 metadata_t backup_md = MD;
@@ -13,7 +13,7 @@ int dest_square = board_arr[m.dest];
 execute_move(m);
 //process
 MD = backup_md;
-unexecute_move(m, dest_square, MD.ep_right && m.dest == MD.ep_right);
+unexecute_move(m, dest_square);
 
 */
 

@@ -101,7 +101,8 @@ void execute_move(move m){
 
 //Reverts from execute_move - does not fix metadata
 //int dest_square - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
-void unexecute_move(move m, int dest_square, int was_ep){
+//was_ep - Flag denoting whether this move was to the en passant square
+void unexecute_move(move m, int dest_square){
     int color = board_arr[m.dest]>8;
     int piece = board_arr[m.dest]%8;
 
@@ -123,13 +124,13 @@ void unexecute_move(move m, int dest_square, int was_ep){
     board.bitboards[color] |= SHIFT(m.src);
     board.bitboards[piece] |= SHIFT(m.src);
 
-    //Board array: Fix
+    //Board array: Restore
     board_arr[m.src] = piece + 8*color;
     board_arr[m.dest] = dest_square;
 
     //Undo en-passant capture
-    if(was_ep){ 
-        int repair_square = m.dest + (16*color-8);
+    if(MD.ep_right && MD.ep_right==m.dest && piece==PAWN){ 
+        int repair_square = m.dest + ( 8-16*color );
         board_arr[repair_square] = PAWN + 8*(1-color);
 
         board.bitboards[1-color] |= SHIFT(repair_square);
