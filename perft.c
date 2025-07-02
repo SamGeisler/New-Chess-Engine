@@ -29,7 +29,7 @@ void perft_debug(char* fen, int depth);
 
 int main(int argc, char *argv[]){
     load_precompute();
-    perft_debug("4k2r/6K1/8/8/8/8/8/8 w k - 0 1", 2);
+    //perft_debug("1r2k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1", 2);
 
     run_test_suite();
 

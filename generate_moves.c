@@ -60,7 +60,7 @@ int generate_moves(move* move_arr, int color){
             if(src_bsf%8 == king_pos%8){
                 dest_bb &= FILES[src_bsf%8];
             } else if(src_bsf/8 == king_pos/8){
-                dest_bb &= RANKS[src_bsf/8];
+                dest_bb &= RANKS[ 7 - src_bsf/8 ];
             } else if(diagLU_NE[src_bsf]==diagLU_NE[king_pos]){
                 dest_bb &= DIAGONALS_NE[diagLU_NE[src_bsf]];
             } else if(diagLU_NW[src_bsf] == diagLU_NW[king_pos]){
