@@ -127,7 +127,7 @@ void run_test_suite(){
     }
     double elapsed = (double)(clock() - start_clock)/CLOCKS_PER_SEC;
     int min = (int)elapsed / 60;
-    printf("Total time elapsed: %dm %.3f seconds\n",min, elapsed-60.0*min);
+    printf("Total time elapsed: %dm %.2fs\n",min, elapsed-60.0*min);
 }
 
 
