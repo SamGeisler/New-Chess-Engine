@@ -1,21 +1,21 @@
 #include "global.h"
 #include "control.h"
-#include "generate_moves.h"
+#include "generateMoves.h"
 
-void execute_move(move m){
-    int color = board_arr[m.src]>8;
-    int color_mod = (2*color-1);//-1 for WHITE, 1 for BLACK
-    int piece = board_arr[m.src]%8;
-    int captured = board_arr[m.dest]%8;
+void executeMove(const Move& m){
+    int color = boardArr[m.src]>8;
+    int colorMod = (2*color-1);//-1 for WHITE, 1 for BLACK
+    int piece = boardArr[m.src]%8;
+    int captured = boardArr[m.dest]%8;
 
     //Update player to move
-    MD.to_move = 1-MD.to_move;
+    MD.toMove = 1-MD.toMove;
 
     //Update fifty-move-rule count
-    if(piece==PAWN || board_arr[m.dest]){
-        MD.fmr_count = 0;
+    if(piece==PAWN || boardArr[m.dest]){
+        MD.fmrCount = 0;
     } else {
-        MD.fmr_count++;
+        MD.fmrCount++;
     }
 
     //Bitboards: Remove moving piece from source
@@ -37,54 +37,54 @@ void execute_move(move m){
     }
 
     //Update board array
-    board_arr[m.dest] = piece + 8*color;
-    board_arr[m.src] = EMPTY;
+    boardArr[m.dest] = piece + 8*color;
+    boardArr[m.src] = EMPTY;
 
     //Bitboards: Add moving piece to destination
     board.bitboards[color] |= SHIFT(m.dest);
     board.bitboards[piece] |= SHIFT(m.dest);
     
     //Handle enpassant capture
-    if(m.dest==MD.ep_right && piece==PAWN){
-        int captured_square = MD.ep_right - 8*color_mod;
-        board.bitboards[1-color] &= ~SHIFT(captured_square);
-        board.bitboards[PAWN] &= ~SHIFT(captured_square);
-        board_arr[captured_square] = EMPTY;
+    if(m.dest==MD.epRight && piece==PAWN){
+        int capturedSquare = MD.epRight - 8*colorMod;
+        board.bitboards[1-color] &= ~SHIFT(capturedSquare);
+        board.bitboards[PAWN] &= ~SHIFT(capturedSquare);
+        boardArr[capturedSquare] = EMPTY;
     }
 
     //Update enpassant metadata
-    MD.ep_right = 0;
-    if(piece==PAWN && m.dest == m.src + color_mod*16){
-        MD.ep_right = m.dest - color_mod*8;
+    MD.epRight = 0;
+    if(piece==PAWN && m.dest == m.src + colorMod*16){
+        MD.epRight = m.dest - colorMod*8;
     }
 
     //Move rook for castling and update castling right for king moves
     if(piece == KING){
-        MD.castle_flags &= 0b0011 << (2*color);
+        MD.castleFlags &= 0b0011 << (2*color);
         if(m.src == 60 && m.dest == 62){
-            board_arr[61] = WHITE_ROOK;
-            board_arr[63] = EMPTY;
+            boardArr[61] = WHITE_ROOK;
+            boardArr[63] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(61);
             board.bitboards[WHITE] |= SHIFT(61);
             board.bitboards[ROOK] ^= SHIFT(63);
             board.bitboards[WHITE] ^= SHIFT(63);
         } else if(m.src == 60 && m.dest == 58){
-            board_arr[59] = WHITE_ROOK;
-            board_arr[56] = EMPTY;
+            boardArr[59] = WHITE_ROOK;
+            boardArr[56] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(59);
             board.bitboards[WHITE] |= SHIFT(59);
             board.bitboards[ROOK] ^= SHIFT(56);
             board.bitboards[WHITE] ^= SHIFT(56);
         } else if(m.src == 4 && m.dest == 6){
-            board_arr[5] = BLACK_ROOK;
-            board_arr[7] = EMPTY;
+            boardArr[5] = BLACK_ROOK;
+            boardArr[7] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(5);
             board.bitboards[BLACK] |= SHIFT(5);
             board.bitboards[ROOK] ^= SHIFT(7);
             board.bitboards[BLACK] ^= SHIFT(7);
         } else if(m.src == 4 && m.dest == 2){
-            board_arr[3] = BLACK_ROOK;
-            board_arr[0] = EMPTY;
+            boardArr[3] = BLACK_ROOK;
+            boardArr[0] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(3);
             board.bitboards[BLACK] |= SHIFT(3);
             board.bitboards[ROOK] ^= SHIFT(0);
@@ -93,27 +93,27 @@ void execute_move(move m){
     }
 
     //Update castling metadata for rook moves/takes
-    if(m.src==0 || m.dest==0) MD.castle_flags &= ~1;
-    if(m.src==7 || m.dest==7) MD.castle_flags &= ~2;
-    if(m.src==56 || m.dest==56) MD.castle_flags &= ~4;
-    if(m.src==63 || m.dest==63) MD.castle_flags &= ~8;
+    if(m.src==0 || m.dest==0) MD.castleFlags &= ~1;
+    if(m.src==7 || m.dest==7) MD.castleFlags &= ~2;
+    if(m.src==56 || m.dest==56) MD.castleFlags &= ~4;
+    if(m.src==63 || m.dest==63) MD.castleFlags &= ~8;
 }
 
-//Reverts from execute_move - does not fix metadata
-//int dest_square - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
-//was_ep - Flag denoting whether this move was to the en passant square
-void unexecute_move(move m, int dest_square){
-    int color = board_arr[m.dest]>8;
-    int piece = board_arr[m.dest]%8;
+//Reverts from executeMove - does not fix metadata
+//int destSquare - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
+//wasEp - Flag denoting whether this move was to the en passant square
+void unexecuteMove(const Move& m, int destSquare){
+    int color = boardArr[m.dest]>8;
+    int piece = boardArr[m.dest]%8;
 
     //Bitboards: Remove piece from destination square
     board.bitboards[color] &= ~SHIFT(m.dest);
     board.bitboards[piece] &= ~SHIFT(m.dest);
 
     //Bitboards: Return captured piece (if any) to destination square
-    if(dest_square){
+    if(destSquare){
         board.bitboards[1-color] |= SHIFT(m.dest);
-        board.bitboards[dest_square%8] |= SHIFT(m.dest);
+        board.bitboards[destSquare%8] |= SHIFT(m.dest);
     }
     
     if(m.promo){
@@ -125,44 +125,44 @@ void unexecute_move(move m, int dest_square){
     board.bitboards[piece] |= SHIFT(m.src);
 
     //Board array: Restore
-    board_arr[m.src] = piece + 8*color;
-    board_arr[m.dest] = dest_square;
+    boardArr[m.src] = piece + 8*color;
+    boardArr[m.dest] = destSquare;
 
     //Undo en-passant capture
-    if(MD.ep_right && MD.ep_right==m.dest && piece==PAWN){ 
-        int repair_square = m.dest + ( 8-16*color );
-        board_arr[repair_square] = PAWN + 8*(1-color);
+    if(MD.epRight && MD.epRight==m.dest && piece==PAWN){ 
+        int repairSquare = m.dest + ( 8-16*color );
+        boardArr[repairSquare] = PAWN + 8*(1-color);
 
-        board.bitboards[1-color] |= SHIFT(repair_square);
-        board.bitboards[PAWN] |= SHIFT(repair_square);
+        board.bitboards[1-color] |= SHIFT(repairSquare);
+        board.bitboards[PAWN] |= SHIFT(repairSquare);
     }
 
     //Undo rook move for castling
     if(piece == KING){
         if(m.src == 60 && m.dest == 62){
-            board_arr[63] = WHITE_ROOK;
-            board_arr[61] = EMPTY;
+            boardArr[63] = WHITE_ROOK;
+            boardArr[61] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(63);
             board.bitboards[WHITE] |= SHIFT(63);
             board.bitboards[ROOK] ^= SHIFT(61);
             board.bitboards[WHITE] ^= SHIFT(61);
         } else if(m.src == 60 && m.dest == 58){
-            board_arr[56] = WHITE_ROOK;
-            board_arr[59] = EMPTY;
+            boardArr[56] = WHITE_ROOK;
+            boardArr[59] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(56);
             board.bitboards[WHITE] |= SHIFT(56);
             board.bitboards[ROOK] ^= SHIFT(59);
             board.bitboards[WHITE] ^= SHIFT(59);
         } else if(m.src == 4 && m.dest == 6){
-            board_arr[7] = BLACK_ROOK;
-            board_arr[5] = EMPTY;
+            boardArr[7] = BLACK_ROOK;
+            boardArr[5] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(7);
             board.bitboards[BLACK] |= SHIFT(7);
             board.bitboards[ROOK] ^= SHIFT(5);
             board.bitboards[BLACK] ^= SHIFT(5);
         } else if(m.src == 4 && m.dest == 2){
-            board_arr[0] = BLACK_ROOK;
-            board_arr[3] = EMPTY;
+            boardArr[0] = BLACK_ROOK;
+            boardArr[3] = EMPTY;
             board.bitboards[ROOK] |= SHIFT(0);
             board.bitboards[BLACK] |= SHIFT(0);
             board.bitboards[ROOK] ^= SHIFT(3);
@@ -171,20 +171,20 @@ void unexecute_move(move m, int dest_square){
     }
 }
 
-move get_engine_move(){
-
+Move getEngineMove(){
+    return (Move){0,0,0};
 }
 
 //The color passed is the color to move
-int game_end(int color, int is_in_check, int num_moves){
-    if(num_moves == 0){
-        if(is_in_check){
+int gameEnd(int color, int isInCheck, int numMoves){
+    if(numMoves == 0){
+        if(isInCheck){
             return 1-2*color;
         } else {
             return 0;
         }
     }
-    if(MD.fmr_count==100) return 0;
+    if(MD.fmrCount==100) return 0;
     
     return 2;
 }

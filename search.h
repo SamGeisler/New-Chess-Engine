@@ -1,11 +1,11 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-move eval(int color, move* best_move, int depth);
+double eval(int color, Move* bestMove, int depth);
 
-move quiescence_eval();
+Move quiescenceEval();
 
-double static_eval();
+double staticEval();
 
 
 #endif

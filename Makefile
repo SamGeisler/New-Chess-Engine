@@ -1,17 +1,17 @@
-INCLUDE= -I C:\mingw_dev_lib\include\SDL2
-LIBRARY = -L C:\mingw_dev_lib\lib
-COMPILER_FLAGS = 
+INCLUDE= -I C:\mingwDevLib\include\SDL2
+LIBRARY = -L C:\mingwDevLib\lib
+COMPILER_FLAGS = -std=c++17 
 
 
 all:
-	gcc $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.c render.c control.c generate_moves.c board_utils.c load_precompute.c player_input.c -lmingw32 -lSDL2main -lSDL2
+	g++ $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.cpp render.cpp control.cpp generateMoves.cpp boardUtils.cpp loadPrecompute.cpp playerInput.cpp -lmingw32 -lSDL2main -lSDL2
 debug:
-	gcc $(INCLUDE) $(LIBRARY) -g -o main main.c render.c control.c generate_moves.c board_utils.c load_precompute.c player_input.c -lmingw32 -lSDL2main -lSDL2
+	g++ $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -g -o main main.cpp render.cpp control.cpp generateMoves.cpp boardUtils.cpp loadPrecompute.cpp playerInput.cpp -lmingw32 -lSDL2main -lSDL2
 
 perft:
-	gcc $(COMPILER_FLAGS) -g -O0 -o perft perft.c generate_moves.c control.c board_utils.c load_precompute.c -lmingw32
+	g++ $(COMPILER_FLAGS) -g -O0 -o perft perft.cpp generateMoves.cpp control.cpp boardUtils.cpp loadPrecompute.cpp -lmingw32
 perftNDB:
-	gcc $(COMPILER_FLAGS) -o  perft perft.c generate_moves.c control.c board_utils.c load_precompute.c -lmingw32
+	g++ $(COMPILER_FLAGS) -o  perft perft.cpp generateMoves.cpp control.cpp boardUtils.cpp loadPrecompute.cpp -lmingw32
 
 precompute:
 	g++ $(COMPILER_FLAGS) -g -O0 -fno-inline -std=c++17 -o precompute precompute.cpp -lmingw32
