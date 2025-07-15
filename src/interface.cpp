@@ -35,7 +35,7 @@ void Interface::drawBackground(uint64_t bb){
             SDL_FillRect(currentSurface, &square, color);
         }
     }
-    //SDL_BlitScaled(numberSurface, NULL, currentSurface, NULL);
+    SDL_BlitScaled(numberSurface, NULL, currentSurface, NULL);
 
 }
 
@@ -130,6 +130,9 @@ Move Interface::handlePlayerInput(uint64_t renderBB){
     Move moveFound = Move {64,64, Move::Promo::NONE };
 
     while(moveFound.src==64){
+
+
+
     
         renderBoard(holding, renderBB);
         while(SDL_PollEvent(&e)){

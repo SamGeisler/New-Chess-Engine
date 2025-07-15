@@ -1,19 +1,40 @@
-INCLUDE= -I C:\mingw_dev_lib\include\SDL2
-LIBRARY = -L C:\mingw_dev_lib\lib
-COMPILER_FLAGS = -std=c++17 
+INCLUDE = -IC:\mingw_dev_lib\include\SDL2 -Iinclude
+LIBRARY = -LC:\mingw_dev_lib\lib
+FLAGS = -std=c++17 -MMD -MP
+DEBUG_FLAGS = -g -O0 -fno-inline
 
+MAIN_SRC = main.cpp interface.cpp game.cpp move.cpp execute_move.cpp bitboard_ops.cpp debug_tools.cpp generate_moves.cpp load_precompute.cpp magic_numbers.cpp
+MAIN_OBJ = $(addprefix obj/, $(MAIN_SRC:.cpp=.o))
 
-all:
-	g++ $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -o main main.cpp interface.cpp game.cpp move.cpp execute_move.cpp bitboard_ops.cpp debug_tools.cpp generate_moves.cpp load_precompute.cpp magic_numbers.cpp -lmingw32 -lSDL2main -lSDL2
-debug:
-	g++ $(INCLUDE) $(LIBRARY) $(COMPILER_FLAGS) -g -o main main.cpp interface.cpp game.cpp move.cpp execute_move.cpp bitboard_ops.cpp debug_tools.cpp generate_moves.cpp load_precompute.cpp magic_numbers.cpp -lmingw32 -lSDL2main -lSDL2
+MGTEST_SRC = move_generation_test.cpp game.cpp move.cpp execute_move.cpp bitboard_ops.cpp debug_tools.cpp generate_moves.cpp load_precompute.cpp magic_numbers.cpp
+MGTEST_OBJ = $(addprefix obj/,$(MGTEST_SRC:.cpp=.o))
 
-MGtest:
-	g++ $(COMPILER_FLAGS) -g -O0 -o MGtest move_generation_test.cpp game.cpp generate_moves.cpp bitboard_ops.cpp debug_tools.cpp magic_numbers.cpp load_precompute.cpp execute_move.cpp move.cpp -lmingw32
-MGtestNDB:
-	g++ $(COMPILER_FLAGS) -o MGtest move_generation_test.cpp game.cpp generate_moves.cpp bitboard_ops.cpp debug_tools.cpp magic_numbers.cpp load_precompute.cpp execute_move.cpp move.cpp -lmingw32
+DEPS = $(MAIN_OBJ:.o=.d) $(MGTEST_OBJ:.o=.d)
+
+main: $(MAIN_OBJ)
+	g++ $(INCLUDE) $(LIBRARY) $(FLAGS) $^ -o $@ -lmingw32 -lSDL2main -lSDL2
+
+-include $(DEPS)
+
+debug: $(MAIN_OBJ)
+	g++ $(INCLUDE) $(LIBRARY) $(FLAGS) $(DEBUG_FLAGS) $^ -o main -lmingw32 -lSDL2main -lSDL2
+
+MGtest: $(MGTEST_OBJ)
+	g++ $(INCLUDE) $(LIBRARY) $(FLAGS) $^ -o $@ -lmingw32
+
+MGtestDB: $(MGTEST_OBJ)
+	g++ $(INCLUDE) $(LIBRARY) $(FLAGS) $(DEBUG_FLAGS) $^ -o MGtest -lmingw32
 
 precompute:
-	g++ $(COMPILER_FLAGS) -g -O0 -fno-inline -std=c++17 -o precompute precompute.cpp -lmingw32
-precomputeNDB:
-	g++ $(COMPILER_FLAGS) -o precompute precompute.cpp -lmingw32
+	g++ $(FLAGS) $(DEBUG_FLAGS) -std=c++17 -o precompute precompute.cpp -lmingw32
+
+obj/%.o: src/%.cpp | obj
+	g++ -c $(FLAGS) $(INCLUDE) $< -o $@
+
+obj:
+	mkdir obj
+
+clean:
+	rmdir obj /S /Q
+	del *.exe /Q
+
