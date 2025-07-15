@@ -39,7 +39,7 @@ public:
         WHITE_BISHOP,
         WHITE_ROOK,
         WHITE_QUEEN,
-        WHITE_KING,
+        WHITE_KING = 7,
         BLACK_PAWN = 10,
         BLACK_KNIGHT,
         BLACK_BISHOP,
@@ -49,10 +49,10 @@ public:
     };
 
     struct Metadata {
-        int castleFlags;
-        int epRight;
-        int toMove;
-        int fmrCount;
+        int castleFlags {0xF};
+        int epRight {0};
+        int toMove {0};
+        int fmrCount {0};
     };
 
     uint64_t bitboards[8];
@@ -64,15 +64,19 @@ public:
     void printMetadata();
 
 
-    int generateMoves(std::array<Move, 220> &moveArr, int color);//Returns number of moves
-    int generateMovesCheck(std::array<Move, 220> &moveArr, int color);
+    int generateMoves(std::array<Move, 220> &moveArr);//Returns number of moves
+    int generateMovesCheck(std::array<Move, 220> &moveArr);
 
     bool isInCheck(int color);
     uint64_t getAttacking(int color);
     uint64_t getPinned(int kingPos, int color);
 
     void executeMove(const Move& m);
-    void unexecuteMove(const Move& m, int destSquare);
+    void unexecuteMove(const Move& m, ArrValue destSquare);
 
     void initBoard(std::string_view initFEN);
+    
+    int gameEnd(int color, int isInCheck, int numMoves);
+
+    int AICOLOR;
 };

@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
-constexpr uint64_t SHIFT(int x) { ((uint64_t)1)<<(x); }
+#define SHIFT(x) (  ((uint64_t)1) << (x)  )
 
 namespace BitboardOps{
     int bitScanForward(uint64_t bb);

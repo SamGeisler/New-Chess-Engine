@@ -3,12 +3,29 @@
 
 #include <iostream>
 
+
+//The color passed is the color to move
+int Game::gameEnd(int color, int isInCheck, int numMoves){
+    if(numMoves == 0){
+        if(isInCheck){
+            return 1 - 2*color;
+        } else {
+            return 0;
+        }
+    }
+    if(metadata.fmrCount==100) return 0;
+    
+    return 2;
+}
+
 void Game::initBoard(std::string_view boardInit){
     //Initialize metadata
     metadata.castleFlags = 0xF;
     metadata.epRight = 0;
 
     for(int i = 0;i<64; i++) boardArr[i] = EMPTY;
+    for(int i = WHITE; i<=KING; ++i) bitboards[i] = 0;
+
     int i = 0;
     int pos = 0;
     while(boardInit[i]!=' '){

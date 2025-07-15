@@ -1,5 +1,5 @@
 #include "magic_numbers.h"
-#include "precompute.h"
+#include "precomputed.h"
 #include "lookup.h"
 
 namespace MagicNumbers{
@@ -11,13 +11,13 @@ namespace MagicNumbers{
 
     uint64_t genDestRook(int src, uint64_t pieces){
         uint64_t intersectBB = BitboardLookup::ROOK_DEST_TRUNC[src] & pieces;
-        int index = rookNums[src] * intersectBB >> (64-rookWidths[src]);
-        return Precompute::rookDestIntersected[src][index];
+        int index = (rookNums[src] * intersectBB) >> (64-rookWidths[src]);
+        return Precomputed::rookDestIntersected[src][index];
     }
 
     uint64_t genDestBishop(int src, uint64_t pieces){
         uint64_t intersectBB = BitboardLookup::BISHOP_DEST_TRUNC[src] & pieces;
-        int index = bishopNums[src] * intersectBB >> (64-bishopWidths[src]);
-        return Precompute::bishopDestIntersected[src][index];
+        int index = (bishopNums[src] * intersectBB) >> (64-bishopWidths[src]);
+        return Precomputed::bishopDestIntersected[src][index];
     }
 }

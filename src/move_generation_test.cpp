@@ -1,59 +1,50 @@
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
+#include "game.h"
+#include "move_generation_test.h"
+#include "precomputed.h"
 
-#include <array>
+#include <cmath>
+#include <iostream>
+#include <ctime>
+#include <cstring>
+#include <iomanip>
 
-#include "global.h"
-#include "loadPrecompute.h"
-#include "generateMoves.h"
-#include "control.h"
-#include "perft.h"
-
-int AICOLOR;
-double PIECE_VALUES[5] = {1.0, 3.0, 3.0, 5.0, 9.0};
-
-unsigned int boardArr[64];
-Board board;
-Metadata MD;
-
-void perftDebug(std::stringView fen, int depth);
 
 int main(int argc, char *argv[]){
-    loadPrecompute();
-    //perftDebug("1r2k2r/8/8/8/8/8/8/R3K2R w KQk - 0 1", 2);
+    Precomputed::loadPrecompute();
 
-    runTestSuite();
+    MoveGenerationTest moveGenerationTest;
+
+    moveGenerationTest.perftDebug("4k2r/6K1/8/8/8/8/8/8 b k - 0 1",2);
+
+    moveGenerationTest.runTestSuite();
 
     return 0;
 }
 
-void perftDebug(std::stringView fen, int depth){
-    initBoard(fen);
+void MoveGenerationTest::perftDebug(std::string_view fen, int depth){
+    game.initBoard(fen);
     std::array<Move, 220> moves;
-    int numMoves = generateMoves(moves, MD.toMove);
+    int numMoves = game.generateMoves(moves);
     
     std::cout << numMoves << " moves.\n";
 
     int total = 0;
-    Metadata backupMd;
+    Game::Metadata backupMD;
 
     for(int i = 0; i<numMoves; i++){
-        backupMd = MD;
-        int destSquare = boardArr[moves[i].dest];
-        executeMove(moves[i]);
+        backupMD = game.metadata;
+        Game::ArrValue destSquare = game.boardArr[moves[i].dest];
+        game.executeMove(moves[i]);
 
   
         std::cout << moves[i] << " -> " << perft(1,depth-1) << " moves.\n";       
 
-        MD = backupMd;
-        unexecuteMove(moves[i], destSquare);
+        game.metadata = backupMD;
+        game.unexecuteMove(moves[i], destSquare);
     }
 }
 
-void runTestSuite(){
+void MoveGenerationTest::runTestSuite(){
 
     std::cout << std::setprecision(3);
 
@@ -64,9 +55,9 @@ void runTestSuite(){
         return;
     }
 
-    clockT startClock = clock();
+    clock_t startClock = clock();
     for(int i = 0; i<125; i++){
-        clockT thisStart = clock();
+        clock_t thisStart = clock();
         char fen[85];
         int fenPos = 0;
         char c;
@@ -94,21 +85,24 @@ void runTestSuite(){
             }
             if(c==' ') fgetc(fh);
         }
+
         //convert to int
         for(int j = 0; j<6; j++){
+            
             int n = strlen(evalsText[j]);
+
             for(int k = 0; k<n; k++){
                 int x = evalsText[j][n-1-k] - '0';
                 evals[j] += ( (int)(pow(10,k)+0.5) ) * x;
             }
         }
 
-        initBoard(fen);
+        game.initBoard(fen);
         std::cout << "board " << i+1 << ":";
         for(int j = 1; j<= 6; j++){
             int p = perft(1,j);
             if(evals[j-1]!=p) testSuccesful = 0;
-            std::cout << " " << staticCast<int>((evals[j-1]==p));
+            std::cout << " " << static_cast<int>((evals[j-1]==p));
         }
 
         double elapsed = (double)(clock() - thisStart)/CLOCKS_PER_SEC;
@@ -130,28 +124,29 @@ void runTestSuite(){
 }
 
 
-int perft(int depth, int endingDepth){
+
+int MoveGenerationTest::perft(int depth, int endingDepth){
     std::array<Move, 220> moves;
     int numMoves;
 
-    numMoves = generateMoves(moves, MD.toMove);
+    numMoves = game.generateMoves(moves);
 
     if(depth==endingDepth){
         return numMoves;
     } else {
         int total = 0;
-        Metadata backupMd;
+        Game::Metadata backupMD;
         for(int i = 0; i<numMoves; i++){
             
-            backupMd = MD;
-            int destSquare = boardArr[moves[i].dest];
-            executeMove(moves[i]);
+            backupMD = game.metadata;
+            Game::ArrValue destSquare = game.boardArr[moves[i].dest];
+            game.executeMove(moves[i]);
 
             int perftResult = perft(depth+1, endingDepth);
             total += perftResult;            
 
-            MD = backupMd;
-            unexecuteMove(moves[i], destSquare);
+            game.metadata = backupMD;
+            game.unexecuteMove(moves[i], destSquare);
         }
         return total;
     }

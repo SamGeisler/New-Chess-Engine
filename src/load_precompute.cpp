@@ -18,12 +18,12 @@ namespace Precomputed {
 }
 
 bool loadRBDestinations(){
-    FILE* destFptr = fopen("rookDestReal.txt","r");//Destination bb based on intersections with other pieces
-    FILE* intFptr = fopen("rookIntersections.txt","r");//Possible intersections
+    FILE* destFptr = fopen("precomputed-data/rookDestReal.txt","r");//Destination bb based on intersections with other pieces
+    FILE* intFptr = fopen("precomputed-data/rookIntersections.txt","r");//Possible intersections
 
     for(int src = 0; src<64; src++){
         int hashCapacity = SHIFT(MagicNumbers::rookWidths[src]);
-        int numEntries = SHIFT(countBits(BitboardLookup::ROOK_DEST_TRUNC[src]));
+        int numEntries = SHIFT(BitboardOps::countBits(BitboardLookup::ROOK_DEST_TRUNC[src]));
 
         Precomputed::rookDestIntersected[src].resize(hashCapacity);
 
@@ -40,23 +40,23 @@ bool loadRBDestinations(){
 
     fclose(destFptr);
     fclose(intFptr);
-    destFptr = fopen("bishopDestReal.txt","r");
-    intFptr = fopen("bishopIntersections.txt","r");
+    destFptr = fopen("precomputed-data/bishopDestReal.txt","r");
+    intFptr = fopen("precomputed-data/bishopIntersections.txt","r");
 
     for(int src = 0; src<64; src++){
         int hashCapacity = SHIFT(MagicNumbers::bishopWidths[src]);
-        int numEntries = SHIFT(countBits(BitboardLookup::BISHOP_DEST_TRUNC[src]));
+        int numEntries = SHIFT(BitboardOps::countBits(BitboardLookup::BISHOP_DEST_TRUNC[src]));
 
         Precomputed::bishopDestIntersected[src].resize(hashCapacity);
 
         for(int i = 0; i<numEntries; i++){
-            uint64_t destBb;
-            uint64_t intBb;
-            fscanf(destFptr,"%llX",&destBb);
-            fscanf(intFptr,"%llX",&intBb);
+            uint64_t destBB;
+            uint64_t intBB;
+            fscanf(destFptr,"%llX",&destBB);
+            fscanf(intFptr,"%llX",&intBB);
 
-            int index = (MagicNumbers::bishopNums[src] * intBb)>>(64-MagicNumbers::bishopWidths[src]);
-            Precomputed::bishopDestIntersected[src][index] = destBb;
+            int index = (MagicNumbers::bishopNums[src] * intBB)>>(64-MagicNumbers::bishopWidths[src]);
+            Precomputed::bishopDestIntersected[src][index] = destBB;
         }
     }
 
@@ -67,7 +67,7 @@ bool loadRBDestinations(){
 }
 
 bool loadInbetween(){
-    FILE* fptr = fopen("ib.txt","r");
+    FILE* fptr = fopen("precomputed-data/ib.txt","r");
     for(int i = 0; i<64; i++){
         for(int j = 0; j<64; j++){
             fscanf(fptr, "%llX",&(Precomputed::inbetweenBB[i][j]));

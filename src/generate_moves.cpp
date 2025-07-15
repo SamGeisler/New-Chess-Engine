@@ -7,10 +7,12 @@ void appendMoves(int src, uint64_t destBB, std::array<Move,220>::iterator& next)
 void appendPawnMoves(int src, int color, uint64_t destBB, std::array<Move,220>::iterator& next);
 
 
-int Game::generateMoves(std::array<Move, 220>& moveArr, int color){
-    if(isInCheck(color)){
-        return generateMovesCheck(moveArr,color);
+int Game::generateMoves(std::array<Move, 220>& moveArr){
+    if(isInCheck(metadata.toMove)){
+        return generateMovesCheck(moveArr);
     }
+
+    int color = metadata.toMove;
 
     auto moveArrNext = moveArr.begin();
 
@@ -58,17 +60,20 @@ int Game::generateMoves(std::array<Move, 220>& moveArr, int color){
     return moveArrNext - moveArr.begin();
 }
 
-int Game::generateMovesCheck(std::array<Move,220>& moveArr, int color){
+int Game::generateMovesCheck(std::array<Move,220>& moveArr){
+
+    int color = metadata.toMove;
+
     auto moveArrNext = moveArr.begin();
 
-    uint64_t kingBb = bitboards[color] & bitboards[KING];
-    int kingPos = BitboardOps::bitScanForward(kingBb);
+    uint64_t kingBB = bitboards[color] & bitboards[KING];
+    int kingPos = BitboardOps::bitScanForward(kingBB);
 
     uint64_t pinned = getPinned(kingPos, color);
 
     uint64_t slidingAttackers = genRook(kingPos, color) & (bitboards[ROOK] | bitboards[QUEEN]) & bitboards[1-color];
     
-    uint64_t slideThroughDest; //Full trajectory of sliding pieces, to ensure king leaves rank/file/diagonal
+    uint64_t slideThroughDest {0}; //Full trajectory of sliding pieces, to ensure king leaves rank/file/diagonal
     uint64_t temp = slidingAttackers;
     while(temp){
         int src = BitboardOps::bitScanForward(temp);
@@ -89,9 +94,9 @@ int Game::generateMovesCheck(std::array<Move,220>& moveArr, int color){
 
     uint64_t pawnKnightAttackers = genKnight(kingPos, color) & bitboards[1-color] & bitboards[KNIGHT];
     if(color==WHITE){
-        pawnKnightAttackers |=  ( (kingBb >> 7) | (kingBb >> 9) ) & bitboards[Game::BLACK] & bitboards[PAWN];
+        pawnKnightAttackers |=  ( (kingBB >> 7) | (kingBB >> 9) ) & bitboards[Game::BLACK] & bitboards[PAWN];
     } else {
-        pawnKnightAttackers |=  ( (kingBb << 7) | (kingBb << 9) ) & bitboards[Game::WHITE] & bitboards[PAWN];
+        pawnKnightAttackers |=  ( (kingBB << 7) | (kingBB << 9) ) & bitboards[Game::WHITE] & bitboards[PAWN];
     }
     int numPK = BitboardOps::countBits(pawnKnightAttackers);
 
@@ -196,7 +201,7 @@ void appendPawnMoves(int src, int color, uint64_t destBB, std::array<Move, 220>:
 }
 
 uint64_t Game::genPawn(int src, int color){
-    return color == WHITE ? genPawnWhite(src) : genPawnBlack(src);
+    return color == WHITE ? genPawnWhite(SHIFT(src)) : genPawnBlack(SHIFT(src));
 }
 
 uint64_t Game::genPawnWhite(uint64_t pawnPos){
@@ -232,8 +237,8 @@ uint64_t Game::genPawnBlack(uint64_t pawnPos){
 
 //Used for king move generation (returns the attacks of the passed color)
 uint64_t Game::getAttacking(int color){
-    uint64_t rv = 0;
-    uint64_t pawns = bitboards[color] & bitboards[PAWN];
+    uint64_t rv {0};
+    uint64_t pawns { bitboards[color] & bitboards[PAWN] };
     if(color==WHITE){
         rv |= (pawns >> 9) & BitboardConst::NOT_H_FILE;
         rv |= (pawns >> 7) & BitboardConst::NOT_A_FILE;
@@ -242,7 +247,7 @@ uint64_t Game::getAttacking(int color){
         rv |= (pawns << 7) & BitboardConst::NOT_H_FILE;
     }
 
-    uint64_t knights = bitboards[color] & bitboards[KNIGHT];
+    uint64_t knights { bitboards[color] & bitboards[KNIGHT] };
     while(knights){
         int src = BitboardOps::bitScanForward(knights);
         knights &= ~SHIFT(src);

@@ -1,4 +1,4 @@
-#include "global.h"
+#include "lookup.h"
 
 const int index64[64] = {
     0,  1, 48,  2, 57, 49, 28,  3,
@@ -11,12 +11,12 @@ const int index64[64] = {
    25, 14, 19,  9, 13,  8,  7,  6
 };
 
-int bitScanForward(uint64_t bb) {
+int BitboardOps::bitScanForward(uint64_t bb) {
    const uint64_t debruijn64 = 0x03f79d71b4cb0a89;
    return index64[((bb & -bb) * debruijn64) >> 58];
 }
 
-int countBits(uint64_t bb){
+int BitboardOps::countBits(uint64_t bb){
     int rv = 0;
     while(bb){
         bb &= ~SHIFT(bitScanForward(bb));
@@ -25,19 +25,3 @@ int countBits(uint64_t bb){
     return rv;
 }
 
-void printBB(uint64_t bb){
-    std::cout << "Bitboard: 0x" << std::hex << bb << std::dec << ":\n";
-    for(int i = 0; i<64; i++){
-        std::cout << ((SHIFT(i) & bb) ? 'X' : '.') << " ";
-        if(i%8==7) std::cout << "\n";
-    }
-}
-
-
-std::string notation(int pos){
-    std::string output{"00"};
-    output[0] = 'a' + pos%8;
-    output[1] = '1' + (63-pos)/8;
-
-    return output;
-}

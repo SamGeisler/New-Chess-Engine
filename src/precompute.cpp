@@ -31,7 +31,7 @@ void genLineInfo();
 void genSlideDest();
 
 using namespace std;
-static uint16T randResetSeedCounter = 0;
+static uint16_t randResetSeedCounter = 0;
 
 void printBb(uint64_t bb){
     printf("Bitboard: 0x%llX\n",bb);
@@ -238,8 +238,8 @@ void genRookDestIntersections(){
         int numBits = countBits(destBb);
         //printf("CB:%d\n",numBits);
 
-        for(uint16T i = 0; i<SHIFT(numBits); i++){
-            uint16T numToShift = i;
+        for(uint16_t i = 0; i<SHIFT(numBits); i++){
+            uint16_t numToShift = i;
             int pos = 0;
             uint64_t intBb = 0;
             while(numToShift){
@@ -276,8 +276,8 @@ void genBishopDestIntersections(){
         int numBits = countBits(destBb);
         //printf("CB:%d\n",numBits);
 
-        for(uint16T i = 0; i<SHIFT(numBits); i++){
-            uint16T numToShift = i;
+        for(uint16_t i = 0; i<SHIFT(numBits); i++){
+            uint16_t numToShift = i;
             int pos = 0;
             uint64_t intBb = 0;
             while(numToShift){
@@ -331,7 +331,7 @@ void genMagicNumbers(){
     loadIntersections();
     MNlogptr = fopen("MNGenLog.txt","w");
     uint64_t testMagic;
-    set<uint16T> usedIndices;
+    set<uint16_t> usedIndices;
 
     numPerfectR = 11;
     numPerfectB = 52;
@@ -346,7 +346,7 @@ void genMagicNumbers(){
 
 
             for(int i = 0; i<numEntries; i++){
-                uint16T prod = (testMagic * rookDestInt[src][i]) >>(64-(bestW[src]-1));
+                uint16_t prod = (testMagic * rookDestInt[src][i]) >>(64-(bestW[src]-1));
 
                 if(usedIndices.find(prod) != usedIndices.end()) break;
                 usedIndices.insert(prod);
@@ -368,7 +368,7 @@ void genMagicNumbers(){
 
 
             for(int i = 0; i<numEntries; i++){
-                uint16T prod = (testMagic * bishopDestInt[src][i]) >>(64-(bestW[src+64]-1));
+                uint16_t prod = (testMagic * bishopDestInt[src][i]) >>(64-(bestW[src+64]-1));
 
                 if(usedIndices.find(prod) != usedIndices.end()) break;
                 usedIndices.insert(prod);
