@@ -10,6 +10,18 @@ SDL_Surface* numberSurface = NULL;
 
 SDL_Surface* pieceSurfaces[16];
 
+Interface::Interface()
+    : game(Game::WHITE, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+{
+    renderInit();
+}
+
+Interface::Interface(int _playerColor, std::string_view _initBoard)
+    : game(_playerColor, _initBoard)
+{
+    renderInit();
+}
+
 SDL_Surface* Interface::loadSurface(const char * path){
     SDL_Surface* loaded = SDL_LoadBMP(path);
     SDL_Surface* optimized = SDL_ConvertSurface(loaded, screenSurface -> format, 0);
@@ -41,18 +53,18 @@ void Interface::drawBackground(uint64_t bb){
 
 
 void Interface::loadPieceSurfaces(){
-    pieceSurfaces[Game::ArrValue::WHITE_PAWN] = loadSurface("img/white_pawn.bmp");
-    pieceSurfaces[Game::ArrValue::WHITE_KNIGHT] = loadSurface("img/white_knight.bmp");
-    pieceSurfaces[Game::ArrValue::WHITE_BISHOP] = loadSurface("img/white_bishop.bmp");
-    pieceSurfaces[Game::ArrValue::WHITE_ROOK] = loadSurface("img/white_rook.bmp");
-    pieceSurfaces[Game::ArrValue::WHITE_QUEEN] = loadSurface("img/white_queen.bmp");
-    pieceSurfaces[Game::ArrValue::WHITE_KING] = loadSurface("img/white_king.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_PAWN] = loadSurface("img/black_pawn.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_KNIGHT] = loadSurface("img/black_knight.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_BISHOP] = loadSurface("img/black_bishop.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_ROOK] = loadSurface("img/black_rook.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_QUEEN] = loadSurface("img/black_queen.bmp");
-    pieceSurfaces[Game::ArrValue::BLACK_KING] = loadSurface("img/black_king.bmp");
+    pieceSurfaces[Game::Piece::WHITE_PAWN] = loadSurface("img/white_pawn.bmp");
+    pieceSurfaces[Game::Piece::WHITE_KNIGHT] = loadSurface("img/white_knight.bmp");
+    pieceSurfaces[Game::Piece::WHITE_BISHOP] = loadSurface("img/white_bishop.bmp");
+    pieceSurfaces[Game::Piece::WHITE_ROOK] = loadSurface("img/white_rook.bmp");
+    pieceSurfaces[Game::Piece::WHITE_QUEEN] = loadSurface("img/white_queen.bmp");
+    pieceSurfaces[Game::Piece::WHITE_KING] = loadSurface("img/white_king.bmp");
+    pieceSurfaces[Game::Piece::BLACK_PAWN] = loadSurface("img/black_pawn.bmp");
+    pieceSurfaces[Game::Piece::BLACK_KNIGHT] = loadSurface("img/black_knight.bmp");
+    pieceSurfaces[Game::Piece::BLACK_BISHOP] = loadSurface("img/black_bishop.bmp");
+    pieceSurfaces[Game::Piece::BLACK_ROOK] = loadSurface("img/black_rook.bmp");
+    pieceSurfaces[Game::Piece::BLACK_QUEEN] = loadSurface("img/black_queen.bmp");
+    pieceSurfaces[Game::Piece::BLACK_KING] = loadSurface("img/black_king.bmp");
 }
 
 void Interface::renderBoard(int holding, uint64_t bb){
@@ -110,10 +122,10 @@ void Interface::renderQuit(){
     currentSurface = NULL;
 
     //Free piece surfaces
-    for(int i = Game::ArrValue::WHITE_PAWN; i<=Game::ArrValue::WHITE_KING; i++){
+    for(int i = Game::Piece::WHITE_PAWN; i<=Game::Piece::WHITE_KING; i++){
         SDL_FreeSurface(pieceSurfaces[i]);
     }
-    for(int i = Game::ArrValue::BLACK_PAWN; i<=Game::ArrValue::BLACK_KING; i++){
+    for(int i = Game::Piece::BLACK_PAWN; i<=Game::Piece::BLACK_KING; i++){
         SDL_FreeSurface(pieceSurfaces[i]);
     }
 

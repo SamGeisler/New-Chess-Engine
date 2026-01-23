@@ -15,12 +15,14 @@ private:
     uint64_t genRook(int src, int color);
     uint64_t genQueen(int src, int color);
     uint64_t genKing(int src, int color);
-    uint64_t (Game::*getPieceDest[6]) (int, int) = {&genPawn, &genKnight, &genBishop, &genRook, &genQueen, &genKing};
+    uint64_t (Game::*getPieceDest[6]) (int, int) = {&Game::genPawn, &Game::genKnight, &Game::genBishop, &Game::genRook, &Game::genQueen, &Game::genKing};
     
     static uint64_t genXrayRook(uint64_t pieces, uint64_t blockers, int src);
     static uint64_t genXrayBishop(uint64_t pieces, uint64_t blockers, int src);
 
 public:
+    Game(int _playerColor, std::string_view _initBoard);
+
     enum BBIndex : int{
         WHITE,
         BLACK,
@@ -32,7 +34,7 @@ public:
         KING
     };
 
-    enum ArrValue : int{
+    enum Piece : int{
         EMPTY,
         WHITE_PAWN = 2,
         WHITE_KNIGHT,
@@ -48,6 +50,13 @@ public:
         BLACK_KING
     };
 
+    enum EndFlag : int{
+        WHITE_WINS = -1,
+        DRAW,
+        BLACK_WINS,
+        NO_END,
+    };
+
     struct Metadata {
         int castleFlags {0xF};
         int epRight {0};
@@ -56,7 +65,7 @@ public:
     };
 
     uint64_t bitboards[8];
-    ArrValue boardArr[64];
+    Piece boardArr[64];
 
     Metadata metadata;
 
@@ -72,11 +81,11 @@ public:
     uint64_t getPinned(int kingPos, int color);
 
     void executeMove(const Move& m);
-    void unexecuteMove(const Move& m, ArrValue destSquare);
+    void unexecuteMove(const Move& m, Piece destSquare);
 
     void initBoard(std::string_view initFEN);
     
-    int gameEnd(int color, int isInCheck, int numMoves);
+    EndFlag gameEnd(int color, int isInCheck, int numMoves);
 
-    int AICOLOR;
+    int playerColor;
 };

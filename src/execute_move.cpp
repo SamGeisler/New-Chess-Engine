@@ -26,17 +26,16 @@ void Game::executeMove(const Move& m){
     if(captured) bitboards[captured] &= ~SHIFT(m.dest);
 
     //Check for promotion
-    if(m.promo){
-        switch(m.promo){
-            case 1: piece = KNIGHT; break;
-            case 2: piece = BISHOP; break;
-            case 3: piece = ROOK; break;
-            case 4: piece = QUEEN; break;
-        }
+    switch(m.promo){
+        case 1: piece = KNIGHT; break;
+        case 2: piece = BISHOP; break;
+        case 3: piece = ROOK; break;
+        case 4: piece = QUEEN; break;
+        default: break;
     }
 
     //Update board array
-    boardArr[m.dest] = static_cast<ArrValue>(piece + 8*color);
+    boardArr[m.dest] = static_cast<Piece>(piece + 8*color);
     boardArr[m.src] = EMPTY;
 
     //Bitboards: Add moving piece to destination
@@ -101,7 +100,7 @@ void Game::executeMove(const Move& m){
 //Reverts from executeMove - does not fix metadata
 //int destSquare - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
 //wasEp - Flag denoting whether this move was to the en passant square
-void Game::unexecuteMove(const Move& m, ArrValue destSquare){
+void Game::unexecuteMove(const Move& m, Piece destSquare){
     int color = boardArr[m.dest]>8;
     int piece = boardArr[m.dest]%8;
 
@@ -124,13 +123,13 @@ void Game::unexecuteMove(const Move& m, ArrValue destSquare){
     bitboards[piece] |= SHIFT(m.src);
 
     //Board array: Restore
-    boardArr[m.src] = static_cast<ArrValue>(piece + 8*color);
+    boardArr[m.src] = static_cast<Piece>(piece + 8*color);
     boardArr[m.dest] = destSquare;
 
     //Undo en-passant capture
     if(metadata.epRight && metadata.epRight==m.dest && piece==PAWN){ 
         int repairSquare = m.dest + ( 8-16*color );
-        boardArr[repairSquare] = static_cast<ArrValue>(PAWN + 8*(1-color));
+        boardArr[repairSquare] = static_cast<Piece>(PAWN + 8*(1-color));
 
         bitboards[1-color] |= SHIFT(repairSquare);
         bitboards[PAWN] |= SHIFT(repairSquare);

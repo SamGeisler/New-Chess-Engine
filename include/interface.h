@@ -30,6 +30,8 @@ private:
     constexpr int YMARG() { return (SHEIGHT - SQUARE_WIDTH*8)/2; }
 
 public:
+    Interface();
+    Interface(int _playerColor, std::string_view _initBoard);
     void renderInit();
     void renderBoard(int holding, uint64_t bb);
     void renderQuit();

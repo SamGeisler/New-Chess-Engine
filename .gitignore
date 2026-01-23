@@ -1,8 +1,14 @@
+.vscode/
+build/
+.cache/
+
 *.o
 *.exe
+Makefile
+compile_commands.json
+.clangd
+
 notes.txt
-.vscode
 tt.txt
 testOutput.txt
 MNGenLog.txt
-obj/

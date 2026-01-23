@@ -33,7 +33,7 @@ void MoveGenerationTest::perftDebug(std::string_view fen, int depth){
 
     for(int i = 0; i<numMoves; i++){
         backupMD = game.metadata;
-        Game::ArrValue destSquare = game.boardArr[moves[i].dest];
+        Game::Piece destSquare = game.boardArr[moves[i].dest];
         game.executeMove(moves[i]);
 
   
@@ -139,7 +139,7 @@ int MoveGenerationTest::perft(int depth, int endingDepth){
         for(int i = 0; i<numMoves; i++){
             
             backupMD = game.metadata;
-            Game::ArrValue destSquare = game.boardArr[moves[i].dest];
+            Game::Piece destSquare = game.boardArr[moves[i].dest];
             game.executeMove(moves[i]);
 
             int perftResult = perft(depth+1, endingDepth);

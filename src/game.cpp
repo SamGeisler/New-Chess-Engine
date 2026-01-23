@@ -3,19 +3,23 @@
 
 #include <iostream>
 
+Game::Game(int _playerColor, std::string_view _initBoard) : 
+    playerColor(_playerColor) {
+    initBoard(_initBoard);
+}
 
 //The color passed is the color to move
-int Game::gameEnd(int color, int isInCheck, int numMoves){
+Game::EndFlag Game::gameEnd(int color, int isInCheck, int numMoves){
     if(numMoves == 0){
         if(isInCheck){
-            return 1 - 2*color;
+            return (color == WHITE) ? BLACK_WINS : WHITE_WINS;
         } else {
-            return 0;
+            return DRAW;
         }
     }
-    if(metadata.fmrCount==100) return 0;
+    if(metadata.fmrCount==100) return DRAW;
     
-    return 2;
+    return NO_END;
 }
 
 void Game::initBoard(std::string_view boardInit){
