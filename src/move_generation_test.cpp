@@ -21,6 +21,11 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+MoveGenerationTest::MoveGenerationTest()
+    : game(Game::WHITE, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+{
+}
+
 void MoveGenerationTest::perftDebug(std::string_view fen, int depth){
     game.initBoard(fen);
     std::array<Move, 220> moves;

@@ -1,7 +1,6 @@
 #include "game.h"
 #include "engine.h"
 #include "precomputed.h"
-#include "lookup.h"
 #include "interface.h"
 
 
@@ -11,7 +10,7 @@ int main(int argc, char* argv[]){
     Engine engine(interface.game);
 
     interface.renderBoard(-1, 0);
-
+    std::cout << "THIS IS A TEST." << std::endl;
     while(1){
         Move move = interface.handlePlayerInput(0);
         interface.game.executeMove(move);
@@ -23,4 +22,3 @@ int main(int argc, char* argv[]){
     interface.renderQuit();
     return 0;
 }
-

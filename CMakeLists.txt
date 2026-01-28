@@ -7,16 +7,18 @@ project(ChessEngine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_CXX_FLAGS "-g")
 
 #For clangd extension
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SDL2_LIB_DIR "C:/mingw_dev_lib/lib")
-set(SDL2_INCLUDE_DIR "C:/mingw_dev_lib/lib")
-set(SDL2_LIBRARY "C:/mingw_dev_lib/bin")
+set(SDL2_INCLUDE_DIR "C:/mingw_dev_lib/include/SDL2")
 
-find_package(SDL2 REQUIRED)
-include_directories(${SDL_INCLUE_DIRS} "include")
+include_directories(${SDL2_INCLUDE_DIR} "include")
+link_directories(${SDL2_LIB_DIR})
 
 set(UNIVERSAL_SOURCES
     src/bitboard_ops.cpp
@@ -25,14 +27,18 @@ set(UNIVERSAL_SOURCES
     src/execute_move.cpp
     src/game.cpp
     src/generate_moves.cpp
-    src/interface.cpp
     src/load_precompute.cpp
     src/magic_numbers.cpp
     src/move.cpp
     src/transposition_table.cpp)
 
-add_executable(${PROJECT_NAME} ${UNIVERSAL_SOURCES} src/main.cpp)
-add_executable(Precompute ${UNIVERSAL_SOURCES} src/precompute.cpp)
-add_executable(MoveGenTest ${UNIVERSAL_SOURCES} src/move_generation_test.cpp)
 
-target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+add_executable(game ${UNIVERSAL_SOURCES} src/main.cpp src/interface.cpp)
+add_executable(movegentest ${UNIVERSAL_SOURCES} src/move_generation_test.cpp)
+add_executable(precompute src/precompute.cpp)
+
+set_target_properties(game PROPERTIES LINK_FLAGS "-mconsole")
+set_target_properties(precompute PROPERTIES LINK_FLAGS "-mconsole")
+set_target_properties(movegentest PROPERTIES LINK_FLAGS "-mconsole")
+
+target_link_libraries(game mingw32 SDL2main SDL2)
