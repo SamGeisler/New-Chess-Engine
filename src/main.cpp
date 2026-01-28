@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     while(1){
         Move move = interface.handlePlayerInput(0);
         interface.game.executeMove(move);
+        interface.renderBoard(-1, 0);
 
         move = engine.getMove();
         interface.game.executeMove(move);

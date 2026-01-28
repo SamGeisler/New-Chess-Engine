@@ -3,7 +3,6 @@
 #include <time.h>
 #include <stdlib.h>
 #include <set>
-#include <fstream>
 #include <iostream>
 #include <assert.h>
 #include <math.h>

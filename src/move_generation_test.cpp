@@ -14,8 +14,6 @@ int main(int argc, char *argv[]){
 
     MoveGenerationTest moveGenerationTest;
 
-    moveGenerationTest.perftDebug("4k2r/6K1/8/8/8/8/8/8 b k - 0 1",2);
-
     moveGenerationTest.runTestSuite();
 
     return 0;
@@ -54,7 +52,7 @@ void MoveGenerationTest::runTestSuite(){
     std::cout << std::setprecision(3);
 
     int testSuccesful = 1;
-    FILE* fh = fopen("perftsuite.txt","r");
+    FILE* fh = fopen("precomputed-data/perftsuite.txt","r");
     if(fh==NULL){
         std::cout << "Test aborted: Could not open perftsuite.txt\n";
         return;
@@ -103,11 +101,13 @@ void MoveGenerationTest::runTestSuite(){
         }
 
         game.initBoard(fen);
-        std::cout << "board " << i+1 << ":";
+        std::cout << "board ";
+        if( i+1 < 100) std::cout << " ";
+        std::cout << i+1 << ":";
         for(int j = 1; j<= 6; j++){
             int p = perft(1,j);
             if(evals[j-1]!=p) testSuccesful = 0;
-            std::cout << " " << static_cast<int>((evals[j-1]==p));
+            std::cout << " " << static_cast<int>(evals[j-1]==p);
         }
 
         double elapsed = (double)(clock() - thisStart)/CLOCKS_PER_SEC;

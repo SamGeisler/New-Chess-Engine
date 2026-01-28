@@ -41,6 +41,9 @@ double Engine::minimaxEval(int depth, int color, double alpha, double beta){
 
     for(auto m = moves.begin(); m<moves.begin() + numMoves; m++){
         Game::Piece destSquare = gameRef.boardArr[m->dest];
+
+        uint64_t bup_bb[8]; 
+        for(int i = 0; i < 8; i++) bup_bb[i] = gameRef.bitboards[i];
         gameRef.executeMove(*m);
 
         double newEval;
@@ -72,6 +75,17 @@ double Engine::minimaxEval(int depth, int color, double alpha, double beta){
         newEval = -minimaxEval(depth-1, 1-color, -beta, -alpha);
         
         gameRef.unexecuteMove(*m, destSquare);  
+        for(int i = 0; i<8; i++){
+            if(bup_bb[i] != gameRef.bitboards[i]){
+                std::cout << "Bitboard " << i << " corrupted!\n";
+                std::cout << "Move: " << m->src << " -> " << m->dest << ", Promo - " << m->promo << "\n";
+                std::cout << "Bitboard old value:\n";
+                gameRef.printBB(bup_bb[i]);
+                std::cout << "\nBitboard new value:\n";
+                gameRef.printBB(static_cast<Game::BBIndex>(i));
+                return 0;
+            }
+        }
 
         if(newEval > maxEval){
             maxEval = newEval;

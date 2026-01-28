@@ -155,6 +155,22 @@ void Game::printBoardArr(){
     }
 }
 
+void Game::printBB(Game::BBIndex bb){
+    std::cout << "Bitboard: 0x" << std::hex << bitboards[bb] << std::dec << ":\n";
+    for(int i = 0; i<64; i++){
+        std::cout << ((SHIFT(i) & bitboards[bb]) ? 'X' : '.') << " ";
+        if(i%8==7) std::cout << "\n";
+    }
+}
+
+void Game::printBB(uint64_t bb){
+    std::cout << "Bitboard: 0x" << std::hex << bb << std::dec << ":\n";
+    for(int i = 0; i<64; i++){
+        std::cout << ((SHIFT(i) & bb) ? 'X' : '.') << " ";
+        if(i%8==7) std::cout << "\n";
+    }
+}
+
 void Game::printMetadata(){
     std::cout << (metadata.toMove ? "Black" : "White") << " to move.\n";
 

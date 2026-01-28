@@ -7,6 +7,8 @@ void Game::executeMove(const Move& m){
     int piece = boardArr[m.src]%8;
     int captured = boardArr[m.dest]%8;
 
+    MD_stack.push(metadata);
+
     //Update player to move
     metadata.toMove = 1-metadata.toMove;
 
@@ -101,6 +103,9 @@ void Game::executeMove(const Move& m){
 //int destSquare - piece located in destination square before move, if any (0=UNUSED1 if none). Bitboard index format (color is not included)
 //wasEp - Flag denoting whether this move was to the en passant square
 void Game::unexecuteMove(const Move& m, Piece destSquare){
+    metadata = MD_stack.top();
+    MD_stack.pop();
+
     int color = boardArr[m.dest]>8;
     int piece = boardArr[m.dest]%8;
 

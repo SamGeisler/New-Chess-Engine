@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+#include <stack>
 
 #include "move.h"
 
@@ -19,6 +20,8 @@ private:
     
     static uint64_t genXrayRook(uint64_t pieces, uint64_t blockers, int src);
     static uint64_t genXrayBishop(uint64_t pieces, uint64_t blockers, int src);
+
+
 
 public:
     Game(int _playerColor, std::string_view _initBoard);
@@ -69,9 +72,12 @@ public:
 
     Metadata metadata;
 
+    std::stack<Metadata> MD_stack;
+
     void printBoardArr();
     void printMetadata();
-
+    void printBB(BBIndex bb);
+    void printBB(uint64_t bb);
 
     int generateMoves(std::array<Move, 220> &moveArr);//Returns number of moves
     int generateMovesCheck(std::array<Move, 220> &moveArr);
